@@ -31,7 +31,9 @@ exec jupyter lab \
     --allow-root \
     --NotebookApp.token='' \
     --NotebookApp.password='' \
-    --ServerApp.tornado_settings='{"headers": {"Content-Security-Policy": "frame-ancestors *"}}' \
+    --ServerApp.tornado_settings='{"headers": {"Content-Security-Policy": "frame-ancestors *; style-src '"'"'self'"'"' '"'"'unsafe-inline'"'"' https://fonts.googleapis.com; font-src '"'"'self'"'"' https://fonts.gstatic.com"}}' \
     --ServerApp.allow_origin='*' \
     --ServerApp.disable_check_xsrf=True \
+    --LabApp.news_url='' \
+    --LabApp.default_url='/doc/tree/00_welcome.ipynb' \
     --notebook-dir="$NOTEBOOKS_DIR"

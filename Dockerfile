@@ -37,6 +37,13 @@ COPY solutions/ ./solutions/
 COPY entrypoint.sh ./
 RUN chmod +x /app/entrypoint.sh
 
+# JupyterLab custom settings: fonts, theme, Simple mode, disable news
+COPY jupyter_config/overrides.json /tmp/overrides.json
+RUN LAB_DIR=$(jupyter lab path 2>/dev/null | grep "Application" | head -1 | sed 's/.*: *//') && \
+    mkdir -p "$LAB_DIR/settings" && \
+    cp /tmp/overrides.json "$LAB_DIR/settings/overrides.json" && \
+    echo "overrides.json → $LAB_DIR/settings/"
+
 RUN mkdir -p /app/notebooks /app/data && \
     chown -R user:user /app
 
