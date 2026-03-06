@@ -26,7 +26,7 @@ Practice implementing operators and architectures from scratch — the exact ski
 
 [![GitHub Container Registry](https://img.shields.io/badge/ghcr.io-TorchCode-blue?style=flat-square&logo=github)](https://ghcr.io/duoan/torchcode)
 [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Spaces-TorchCode-blue?style=flat-square)](https://huggingface.co/spaces/duoan/TorchCode)
-![Problems](https://img.shields.io/badge/problems-37-orange?style=flat-square)
+![Problems](https://img.shields.io/badge/problems-39-orange?style=flat-square)
 ![GPU](https://img.shields.io/badge/GPU-not%20required-brightgreen?style=flat-square)
 
 </div>
@@ -41,7 +41,7 @@ TorchCode gives you a **structured practice environment** with:
 
 | | Feature | |
 |---|---|---|
-| 🧩 | **37 curated problems** | The most frequently asked PyTorch interview topics |
+| 🧩 | **39 curated problems** | The most frequently asked PyTorch interview topics |
 | ⚖️ | **Automated judge** | Correctness checks, gradient verification, and timing |
 | 🎨 | **Instant feedback** | Colored pass/fail per test case, just like competitive programming |
 | 💡 | **Hints when stuck** | Nudges without full spoilers |
@@ -152,6 +152,8 @@ If you're interviewing for any role touching LLMs or Transformers, expect at lea
 | 35 | <a href="https://github.com/duoan/TorchCode/blob/master/templates/35_bpe.ipynb" target="_blank">BPE Tokenizer</a> <a href="https://colab.research.google.com/github/duoan/TorchCode/blob/master/templates/35_bpe.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" height="20"></a> | `SimpleBPE` | ![Hard](https://img.shields.io/badge/Hard-F44336?style=flat-square) | 💡 | Byte-pair encoding, merge rules, subword splits |
 | 36 | <a href="https://github.com/duoan/TorchCode/blob/master/templates/36_int8_quantization.ipynb" target="_blank">INT8 Quantization</a> <a href="https://colab.research.google.com/github/duoan/TorchCode/blob/master/templates/36_int8_quantization.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" height="20"></a> | `Int8Linear` (nn.Module) | ![Hard](https://img.shields.io/badge/Hard-F44336?style=flat-square) | 💡 | Per-channel quantize, scale/zero-point, buffer vs param |
 | 37 | <a href="https://github.com/duoan/TorchCode/blob/master/templates/37_dpo_loss.ipynb" target="_blank">DPO Loss</a> <a href="https://colab.research.google.com/github/duoan/TorchCode/blob/master/templates/37_dpo_loss.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" height="20"></a> | `dpo_loss(chosen, rejected, ...)` | ![Hard](https://img.shields.io/badge/Hard-F44336?style=flat-square) | 💡 | Direct preference optimization, alignment training |
+| 38 | <a href="https://github.com/duoan/TorchCode/blob/master/templates/38_grpo_loss.ipynb" target="_blank">GRPO Loss</a> <a href="https://colab.research.google.com/github/duoan/TorchCode/blob/master/templates/38_grpo_loss.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" height="20"></a> | `grpo_loss(logps, rewards, group_ids, eps)` | ![Hard](https://img.shields.io/badge/Hard-F44336?style=flat-square) | 💡 | Group relative policy optimization, RLAIF, within-group normalized advantages |
+| 39 | <a href="https://github.com/duoan/TorchCode/blob/master/templates/39_ppo_loss.ipynb" target="_blank">PPO Loss</a> <a href="https://colab.research.google.com/github/duoan/TorchCode/blob/master/templates/39_ppo_loss.ipynb" target="_blank"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab" height="20"></a> | `ppo_loss(new_logps, old_logps, advantages, clip_ratio)` | ![Hard](https://img.shields.io/badge/Hard-F44336?style=flat-square) | 💡 | PPO clipped surrogate loss, policy gradient, trust region |
 
 ---
 
@@ -198,7 +200,7 @@ status()                    # Progress dashboard — solved / attempted / todo
 | **1** | 🧱 Foundations | ReLU → Softmax → CE Loss → Dropout → Embedding → GELU → Linear → LayerNorm → BatchNorm → RMSNorm → SwiGLU MLP → Conv2d | 2–3 hrs |
 | **2** | 🧠 Attention Deep Dive | SDPA → MHA → Cross-Attn → Causal → GQA → KV Cache → Sliding Window → RoPE → Linear Attn → Flash Attn | 3–4 hrs |
 | **3** | 🏗️ Architecture + Training | GPT-2 Block → LoRA → MoE → ViT Patch → Adam → Cosine LR → Grad Clip → Grad Accumulation → Kaiming Init | 3–4 hrs |
-| **4** | 🎯 Inference + Advanced | Top-k/p Sampling → Beam Search → Speculative Decoding → BPE → INT8 Quant → DPO Loss + speed run | 3–4 hrs |
+| **4** | 🎯 Inference + Advanced | Top-k/p Sampling → Beam Search → Speculative Decoding → BPE → INT8 Quant → DPO Loss → GRPO Loss → PPO Loss + speed run | 3–4 hrs |
 
 ---
 
