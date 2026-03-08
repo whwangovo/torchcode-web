@@ -24,10 +24,13 @@ Practice implementing operators and architectures from scratch — the exact ski
 [![Python](https://img.shields.io/badge/Python_3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
+[![GitHub stars](https://img.shields.io/github/stars/duoan/TorchCode?style=social)](https://github.com/duoan/TorchCode)
 [![GitHub Container Registry](https://img.shields.io/badge/ghcr.io-TorchCode-blue?style=flat-square&logo=github)](https://ghcr.io/duoan/torchcode)
 [![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Spaces-TorchCode-blue?style=flat-square)](https://huggingface.co/spaces/duoan/TorchCode)
 ![Problems](https://img.shields.io/badge/problems-40-orange?style=flat-square)
 ![GPU](https://img.shields.io/badge/GPU-not%20required-brightgreen?style=flat-square)
+
+[![Star History Chart](https://api.star-history.com/svg?repos=duoan/TorchCode&type=Date)](https://star-history.com/#duoan/TorchCode&Date)
 
 </div>
 
@@ -296,5 +299,15 @@ Anyone preparing for ML/AI engineering interviews at top tech companies, or anyo
 **Built for engineers who want to deeply understand what they build.**
 
 If this helped your interview prep, consider giving it a ⭐
+
+---
+
+### ☕ Buy Me a Coffee
+
+<a href="https://buymeacoffee.com/duoan" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a>
+
+<img src="./bmc_qr.png" alt="BMC QR Code" width="150" height="150">
+
+*Scan to support*
 
 </div>
