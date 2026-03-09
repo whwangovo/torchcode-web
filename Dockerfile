@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim AS build-base
 
 # Build-only toolchain for the JupyterLab extension (not kept in runtime image).
 RUN apt-get update && \
@@ -18,6 +18,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
       "jupyterlab>=4.0" \
       "hatch-jupyter-builder>=0.5"
 
+FROM build-base AS judge-builder
+
 WORKDIR /src
 
 # Build torch_judge wheel.
@@ -25,17 +27,21 @@ COPY pyproject.toml setup.py README.md ./
 COPY torch_judge/ ./torch_judge/
 RUN python -m build --wheel --outdir /tmp/wheels .
 
+FROM build-base AS labext-builder
+
 # Build precompiled JupyterLab extension wheel.
 # Copy manifests first so dependency install is cacheable between source edits.
 WORKDIR /src/labextension
-COPY labextension/package.json labextension/pyproject.toml labextension/tsconfig.json labextension/install.json ./
+COPY labextension/.yarnrc.yml labextension/package.json labextension/pyproject.toml labextension/tsconfig.json labextension/install.json ./
+RUN jlpm install
+
 COPY labextension/style ./style
 COPY labextension/src ./src
 COPY labextension/torchcode_labext ./torchcode_labext
-RUN jlpm install && jlpm run build:prod
+RUN jlpm run build:prod
 
 WORKDIR /src
-RUN python -m build --wheel --outdir /tmp/wheels ./labextension
+RUN python -m build --wheel --outdir /tmp/wheels /src/labextension
 
 
 FROM python:3.11-slim AS runtime
@@ -44,7 +50,8 @@ RUN useradd -m -u 1000 user
 
 WORKDIR /app
 
-COPY --from=builder /tmp/wheels /tmp/wheels
+COPY --from=judge-builder /tmp/wheels /tmp/wheels
+COPY --from=labext-builder /tmp/wheels /tmp/wheels
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
       torch --index-url https://download.pytorch.org/whl/cpu && \
