@@ -10,7 +10,8 @@ Usage:
     check("relu")
 """
 
+from torch_judge._version import __version__
 from torch_judge.engine import check, hint
 from torch_judge.progress import status, reset_progress
 
-__all__ = ["check", "hint", "status", "reset_progress"]
+__all__ = ["__version__", "check", "hint", "status", "reset_progress"]

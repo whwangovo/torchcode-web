@@ -283,14 +283,14 @@ The judge is published as a separate package so Colab/users can `pip install tor
 
 ### Automatic (GitHub Action)
 
-Pushing a **version tag** (e.g. `v0.1.0`) triggers [`.github/workflows/pypi-publish.yml`](.github/workflows/pypi-publish.yml), which builds and uploads to PyPI.
+Pushing to `master` after changing the package version triggers [`.github/workflows/pypi-publish.yml`](.github/workflows/pypi-publish.yml), which builds and uploads to PyPI. No git tag is required.
 
-1. **Bump version** in `pyproject.toml` (e.g. `version = "0.1.1"`).
+1. **Bump version** in `torch_judge/_version.py` (e.g. `__version__ = "0.1.1"`).
 2. **Configure PyPI Trusted Publisher** (one-time):
    - PyPI → Your project **torch-judge** → **Publishing** → **Add a new pending publisher**
    - Owner: `duoan`, Repository: `TorchCode`, Workflow: `pypi-publish.yml`, Environment: (leave empty)
-   - Run the workflow once (push a tag or **Actions → Publish torch-judge to PyPI → Run workflow**); PyPI will then link the publisher.
-3. **Release**: `git tag v0.1.1 && git push origin v0.1.1` (tag must match the version in `pyproject.toml`).
+   - Run the workflow once (push a version bump to `master` or **Actions → Publish torch-judge to PyPI → Run workflow**); PyPI will then link the publisher.
+3. **Release**: commit the version bump and `git push origin master`.
 
 Alternatively, use an API token: add repository secret `PYPI_API_TOKEN` (value = `pypi-...` from PyPI) and set `TWINE_USERNAME=__token__` and `TWINE_PASSWORD` from that secret in the workflow if you prefer not to use Trusted Publishing.
 
@@ -302,7 +302,7 @@ python -m build
 twine upload dist/*
 ```
 
-Version is in `pyproject.toml`; bump it before each release.
+Version is in `torch_judge/_version.py`; bump it before each release.
 
 ---
 

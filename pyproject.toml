@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torch-judge"
-version = "0.1.0"
+dynamic = ["version"]
 description = "PyTorch coding judge for Jupyter — check implementations against test cases (TorchCode)."
 readme = "README.md"
 license = "MIT"
@@ -36,3 +36,6 @@ dev = [
 [tool.setuptools.packages.find]
 include = ["torch_judge*"]
 exclude = ["labextension*", "scripts*", "templates*", "solutions*", "jupyter_config*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "torch_judge._version.__version__"}
