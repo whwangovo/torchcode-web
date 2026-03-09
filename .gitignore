@@ -7,6 +7,11 @@ data/*.db
 .DS_Store
 notebooks/
 
+# PyPI build artifacts
+dist/
+build/
+.venv/
+
 # JupyterLab extension build artifacts
 labextension/lib/
 labextension/node_modules/

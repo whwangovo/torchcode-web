@@ -65,6 +65,23 @@ No cloud. No signup. No GPU needed. Just `make run` — or try it instantly on H
 
 Or open any problem directly in Google Colab — every notebook has an [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/duoan/TorchCode/blob/master/templates/01_relu.ipynb) badge.
 
+### Option 0b — Use the judge in Colab (pip)
+
+In Google Colab, install the judge from PyPI so you can run `check(...)` without cloning the repo:
+
+```bash
+!pip install torch-judge
+```
+
+Then in a notebook cell:
+
+```python
+from torch_judge import check, status, hint, reset_progress
+status()           # list all problems and your progress
+check("relu")      # run tests for the "relu" task
+hint("relu")       # show a hint
+```
+
 ### Option 1 — Pull the pre-built image (fastest)
 
 ```bash
@@ -257,6 +274,35 @@ TASK = {
 ```
 
 No registration needed. The judge picks it up automatically.
+
+---
+
+## 📦 Publishing `torch-judge` to PyPI (maintainers)
+
+The judge is published as a separate package so Colab/users can `pip install torch-judge` without cloning the repo.
+
+### Automatic (GitHub Action)
+
+Pushing a **version tag** (e.g. `v0.1.0`) triggers [`.github/workflows/pypi-publish.yml`](.github/workflows/pypi-publish.yml), which builds and uploads to PyPI.
+
+1. **Bump version** in `pyproject.toml` (e.g. `version = "0.1.1"`).
+2. **Configure PyPI Trusted Publisher** (one-time):
+   - PyPI → Your project **torch-judge** → **Publishing** → **Add a new pending publisher**
+   - Owner: `duoan`, Repository: `TorchCode`, Workflow: `pypi-publish.yml`, Environment: (leave empty)
+   - Run the workflow once (push a tag or **Actions → Publish torch-judge to PyPI → Run workflow**); PyPI will then link the publisher.
+3. **Release**: `git tag v0.1.1 && git push origin v0.1.1` (tag must match the version in `pyproject.toml`).
+
+Alternatively, use an API token: add repository secret `PYPI_API_TOKEN` (value = `pypi-...` from PyPI) and set `TWINE_USERNAME=__token__` and `TWINE_PASSWORD` from that secret in the workflow if you prefer not to use Trusted Publishing.
+
+### Manual
+
+```bash
+pip install build twine
+python -m build
+twine upload dist/*
+```
+
+Version is in `pyproject.toml`; bump it before each release.
 
 ---
 
