@@ -340,6 +340,17 @@ Anyone preparing for ML/AI engineering interviews at top tech companies, or anyo
 
 ---
 
+## 🤝 Contributors
+
+Thanks to everyone who has contributed to TorchCode.
+
+<!-- readme: contributors -start -->
+<!-- readme: contributors -end -->
+
+Auto-generated from the [GitHub contributors graph](https://github.com/duoan/TorchCode/graphs/contributors) with avatars and GitHub usernames.
+
+---
+
 <div align="center">
 
 **Built for engineers who want to deeply understand what they build.**
