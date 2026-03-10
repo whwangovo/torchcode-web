@@ -345,6 +345,33 @@ Anyone preparing for ML/AI engineering interviews at top tech companies, or anyo
 Thanks to everyone who has contributed to TorchCode.
 
 <!-- readme: contributors -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/duoan">
+                    <img src="https://avatars.githubusercontent.com/u/2378740?v=4" width="100;" alt="duoan"/>
+                    <br />
+                    <sub><b>duoan</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/Ando233">
+                    <img src="https://avatars.githubusercontent.com/u/74404658?v=4" width="100;" alt="Ando233"/>
+                    <br />
+                    <sub><b>Ando233</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/ThierryHJ">
+                    <img src="https://avatars.githubusercontent.com/u/51846529?v=4" width="100;" alt="ThierryHJ"/>
+                    <br />
+                    <sub><b>ThierryHJ</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
 <!-- readme: contributors -end -->
 
 Auto-generated from the [GitHub contributors graph](https://github.com/duoan/TorchCode/graphs/contributors) with avatars and GitHub usernames.
