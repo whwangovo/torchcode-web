@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "TorchCode",
-  description: "PyTorch coding challenge platform",
+  description: "LeetCode for PyTorch — ML coding challenges",
 };
 
 export default function RootLayout({
@@ -16,7 +16,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={`${inter.className} min-h-screen bg-surface`}>
+        {children}
+      </body>
     </html>
   );
 }
