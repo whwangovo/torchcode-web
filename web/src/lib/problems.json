@@ -1,0 +1,1032 @@
+{
+  "problems": [
+    {
+      "id": "cross_entropy",
+      "title": "Cross-Entropy Loss",
+      "difficulty": "Easy",
+      "functionName": "cross_entropy_loss",
+      "hint": "log_probs = logits - logsumexp(logits, dim=-1, keepdim=True). Loss = -log_probs[arange(B), targets].mean(). Subtract max for stability (logsumexp handles this).",
+      "tests": [
+        {
+          "name": "Matches F.cross_entropy",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nlogits = torch.randn(4, 10)\ntargets = torch.randint(0, 10, (4,))\nout = {fn}(logits, targets)\nref = torch.nn.functional.cross_entropy(logits, targets)\nassert torch.allclose(out, ref, atol=1e-5), f'Mismatch: {out.item():.4f} vs {ref.item():.4f}'\n"
+        },
+        {
+          "name": "Numerical stability",
+          "code": "\nimport torch\nlogits = torch.tensor([[1000., 0., 0.], [0., 1000., 0.]])\ntargets = torch.tensor([0, 1])\nout = {fn}(logits, targets)\nassert not torch.isnan(out), 'NaN with large logits'\nassert not torch.isinf(out), 'Inf with large logits'\nassert out.item() < 0.01, 'Should be ~0 for confident correct predictions'\n"
+        },
+        {
+          "name": "Scalar output",
+          "code": "\nimport torch\nout = {fn}(torch.randn(8, 5), torch.randint(0, 5, (8,)))\nassert out.dim() == 0, 'Loss must be a scalar'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nlogits = torch.randn(8, 5, requires_grad=True)\ntargets = torch.randint(0, 5, (8,))\n{fn}(logits, targets).backward()\nassert logits.grad is not None, 'logits.grad is None'\n"
+        }
+      ]
+    },
+    {
+      "id": "dropout",
+      "title": "Implement Dropout",
+      "difficulty": "Easy",
+      "functionName": "MyDropout",
+      "hint": "During training: randomly zero elements with probability p, scale survivors by 1/(1-p). During eval: identity. Use torch.rand_like and compare with p.",
+      "tests": [
+        {
+          "name": "Eval mode is identity",
+          "code": "\nimport torch, torch.nn as nn\nd = {fn}(p=0.5)\nassert isinstance(d, nn.Module), 'Must inherit from nn.Module'\nd.eval()\nx = torch.randn(4, 8)\nassert torch.equal(d(x), x), 'eval mode should return input unchanged'\n"
+        },
+        {
+          "name": "Training: zeros and scaling",
+          "code": "\nimport torch\ntorch.manual_seed(42)\nd = {fn}(p=0.5)\nd.train()\nx = torch.ones(1000)\nout = d(x)\nassert (out == 0).any(), 'No zeros found during training'\nnon_zero = out[out != 0]\nassert torch.allclose(non_zero, torch.full_like(non_zero, 2.0), atol=1e-5), 'Non-zeros should be scaled by 1/(1-p)=2.0'\n"
+        },
+        {
+          "name": "Drop rate is approximately p",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nd = {fn}(p=0.3)\nd.train()\nout = d(torch.ones(10000))\nfrac = (out == 0).float().mean().item()\nassert 0.25 < frac < 0.35, f'Expected ~30%% zeros, got {frac*100:.1f}%%'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nd = {fn}(p=0.5)\nd.train()\nx = torch.randn(4, 8, requires_grad=True)\nd(x).sum().backward()\nassert x.grad is not None, 'x.grad is None'\n"
+        }
+      ]
+    },
+    {
+      "id": "embedding",
+      "title": "Embedding Layer",
+      "difficulty": "Easy",
+      "functionName": "MyEmbedding",
+      "hint": "Store a weight matrix of shape (num_embeddings, embedding_dim) as nn.Parameter. Forward = weight[indices].",
+      "tests": [
+        {
+          "name": "Weight shape",
+          "code": "\nimport torch, torch.nn as nn\nemb = {fn}(100, 32)\nassert isinstance(emb, nn.Module), 'Must inherit from nn.Module'\nassert hasattr(emb, 'weight'), 'Need self.weight'\nassert emb.weight.shape == (100, 32), f'Weight shape: {emb.weight.shape}'\nassert emb.weight.requires_grad, 'weight must require grad'\n"
+        },
+        {
+          "name": "Lookup correctness",
+          "code": "\nimport torch\nemb = {fn}(10, 4)\nidx = torch.tensor([0, 3, 7])\nout = emb(idx)\nassert out.shape == (3, 4), f'Output shape: {out.shape}'\nassert torch.equal(out[0], emb.weight[0]), 'Mismatch at index 0'\nassert torch.equal(out[1], emb.weight[3]), 'Mismatch at index 3'\n"
+        },
+        {
+          "name": "Batch of indices",
+          "code": "\nimport torch\nemb = {fn}(20, 8)\nidx = torch.tensor([[1, 2], [3, 4]])\nout = emb(idx)\nassert out.shape == (2, 2, 8), f'Batch output shape: {out.shape}'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nemb = {fn}(10, 4)\nout = emb(torch.tensor([2, 5]))\nout.sum().backward()\nassert emb.weight.grad is not None, 'weight.grad is None'\nassert emb.weight.grad[2].abs().sum() > 0, 'Grad at used index should be non-zero'\nassert emb.weight.grad[0].abs().sum() == 0, 'Grad at unused index should be zero'\n"
+        }
+      ]
+    },
+    {
+      "id": "gelu",
+      "title": "GELU Activation",
+      "difficulty": "Easy",
+      "functionName": "my_gelu",
+      "hint": "Exact: x * 0.5 * (1 + erf(x / sqrt(2))). Or approximate: 0.5*x*(1+tanh(sqrt(2/pi)*(x+0.044715*x^3))).",
+      "tests": [
+        {
+          "name": "Matches F.gelu",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nx = torch.randn(4, 8)\nout = {fn}(x)\nref = torch.nn.functional.gelu(x)\nassert torch.allclose(out, ref, atol=1e-4), 'Does not match F.gelu'\n"
+        },
+        {
+          "name": "gelu(0) = 0",
+          "code": "\nimport torch\nout = {fn}(torch.tensor([0.0]))\nassert torch.allclose(out, torch.tensor([0.0]), atol=1e-7), f'gelu(0) = {out.item()}'\n"
+        },
+        {
+          "name": "Shape preservation",
+          "code": "\nimport torch\nx = torch.randn(2, 3, 4)\nassert {fn}(x).shape == x.shape, 'Shape mismatch'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nx = torch.randn(4, 8, requires_grad=True)\n{fn}(x).sum().backward()\nassert x.grad is not None and x.grad.shape == x.shape, 'Gradient issue'\n"
+        }
+      ]
+    },
+    {
+      "id": "gradient_accumulation",
+      "title": "Gradient Accumulation",
+      "difficulty": "Easy",
+      "functionName": "accumulated_step",
+      "hint": "Zero grads once. For each micro-batch: forward, loss/n_batches, backward. Then optimizer.step(). The loss scaling ensures accumulated grads match a single large batch.",
+      "tests": [
+        {
+          "name": "Matches full batch update",
+          "code": "\nimport torch, torch.nn as nn\ntorch.manual_seed(0)\nmodel = nn.Linear(4, 2, bias=False)\nmodel_ref = nn.Linear(4, 2, bias=False)\nmodel_ref.load_state_dict(model.state_dict())\nloss_fn = nn.MSELoss()\nopt = torch.optim.SGD(model.parameters(), lr=0.1)\nopt_ref = torch.optim.SGD(model_ref.parameters(), lr=0.1)\nx1, y1 = torch.randn(2, 4), torch.randn(2, 2)\nx2, y2 = torch.randn(2, 4), torch.randn(2, 2)\n{fn}(model, opt, loss_fn, [(x1, y1), (x2, y2)])\nopt_ref.zero_grad()\nloss_ref = loss_fn(model_ref(torch.cat([x1, x2])), torch.cat([y1, y2]))\nloss_ref.backward()\nopt_ref.step()\nassert torch.allclose(model.weight.data, model_ref.weight.data, atol=1e-5), 'Must match full batch'\n"
+        },
+        {
+          "name": "Returns loss value",
+          "code": "\nimport torch, torch.nn as nn\nmodel = nn.Linear(4, 2)\nopt = torch.optim.SGD(model.parameters(), lr=0.01)\nloss = {fn}(model, opt, nn.MSELoss(), [(torch.randn(2, 4), torch.randn(2, 2))])\nassert isinstance(loss, float), f'Should return float, got {type(loss)}'\nassert loss > 0, 'Loss should be positive'\n"
+        },
+        {
+          "name": "Parameters actually update",
+          "code": "\nimport torch, torch.nn as nn\nmodel = nn.Linear(4, 2)\nopt = torch.optim.SGD(model.parameters(), lr=0.1)\nw_before = model.weight.data.clone()\n{fn}(model, opt, nn.MSELoss(), [(torch.randn(2, 4), torch.randn(2, 2))])\nassert not torch.equal(model.weight.data, w_before), 'Should change'\n"
+        }
+      ]
+    },
+    {
+      "id": "gradient_clipping",
+      "title": "Gradient Norm Clipping",
+      "difficulty": "Easy",
+      "functionName": "clip_grad_norm",
+      "hint": "Total norm = sqrt(sum(p.grad.norm()^2)). If total > max_norm, scale all grads by max_norm/total. Return original total norm.",
+      "tests": [
+        {
+          "name": "Clips to max_norm",
+          "code": "\nimport torch\np1 = torch.randn(10, requires_grad=True)\np2 = torch.randn(10, requires_grad=True)\n(p1 * 10).sum().backward()\n(p2 * 10).sum().backward()\n{fn}([p1, p2], max_norm=1.0)\nnew_norm = torch.sqrt(p1.grad.norm()**2 + p2.grad.norm()**2).item()\nassert new_norm <= 1.0 + 1e-5, f'Clipped norm {new_norm:.4f} > 1.0'\n"
+        },
+        {
+          "name": "Returns original norm",
+          "code": "\nimport torch\np = torch.randn(10, requires_grad=True)\n(p * 3).sum().backward()\nexpected = p.grad.norm().item()\nreturned = {fn}([p], max_norm=100.0)\nassert abs(returned - expected) < 1e-4, f'Returned {returned:.4f}, expected {expected:.4f}'\n"
+        },
+        {
+          "name": "No change when norm < max_norm",
+          "code": "\nimport torch\np = torch.randn(4, requires_grad=True)\n(p * 0.001).sum().backward()\ngrad_before = p.grad.clone()\n{fn}([p], max_norm=100.0)\nassert torch.equal(p.grad, grad_before), 'Should not change when norm < max_norm'\n"
+        },
+        {
+          "name": "Preserves direction",
+          "code": "\nimport torch\ntorch.manual_seed(0)\np = torch.randn(100, requires_grad=True)\n(p * 10).sum().backward()\ndir_before = p.grad / p.grad.norm()\n{fn}([p], max_norm=1.0)\ndir_after = p.grad / p.grad.norm()\nassert torch.allclose(dir_before, dir_after, atol=1e-5), 'Should preserve direction'\n"
+        }
+      ]
+    },
+    {
+      "id": "relu",
+      "title": "Implement ReLU",
+      "difficulty": "Easy",
+      "functionName": "relu",
+      "hint": "ReLU(x) = max(0, x). Think about element-wise comparison with zero.",
+      "tests": [
+        {
+          "name": "Basic values",
+          "code": "\nimport torch\nx = torch.tensor([-2., -1., 0., 1., 2.])\nout = {fn}(x)\nexpected = torch.tensor([0., 0., 0., 1., 2.])\nassert out.shape == expected.shape, f'Shape mismatch: {out.shape} vs {expected.shape}'\nassert torch.allclose(out, expected), f'Wrong Answer: {out} vs {expected}'\n"
+        },
+        {
+          "name": "2-D tensor",
+          "code": "\nimport torch\nx = torch.randn(4, 8)\nout = {fn}(x)\nassert out.shape == x.shape, f'Shape mismatch on 2-D input'\nassert (out >= 0).all(), 'ReLU output must be non-negative'\nassert torch.allclose(out, x.clamp(min=0)), 'Value mismatch on random input'\n"
+        },
+        {
+          "name": "Gradient check",
+          "code": "\nimport torch\nx = torch.tensor([-1., 0., 1., 2.], requires_grad=True)\nout = {fn}(x)\nout.sum().backward()\nassert x.grad is not None, 'Gradient not computed'\nassert x.grad[0] == 0., f'grad at x=-1 should be 0, got {x.grad[0]}'\nassert x.grad[2] == 1., f'grad at x=1 should be 1, got {x.grad[2]}'\nassert x.grad[3] == 1., f'grad at x=2 should be 1, got {x.grad[3]}'\nassert x.grad[1] in (0., 1.), f'grad at x=0 should be 0 or 1, got {x.grad[1]}'\n"
+        },
+        {
+          "name": "Performance",
+          "code": "\nimport torch, time\nbig = torch.randn(1024, 1024)\nt0 = time.perf_counter()\nfor _ in range(100):\n    {fn}(big)\nelapsed = time.perf_counter() - t0\nassert elapsed < 5.0, f'Too slow: {elapsed:.2f}s for 100 iterations'\n"
+        }
+      ]
+    },
+    {
+      "id": "softmax",
+      "title": "Implement Softmax",
+      "difficulty": "Easy",
+      "functionName": "my_softmax",
+      "hint": "softmax(x)_i = exp(x_i) / sum(exp(x_j)). Subtract max(x) first for numerical stability.",
+      "tests": [
+        {
+          "name": "Basic 1-D",
+          "code": "\nimport torch\nx = torch.tensor([1.0, 2.0, 3.0])\nout = {fn}(x, dim=-1)\nexpected = torch.softmax(x, dim=-1)\nassert torch.allclose(out, expected, atol=1e-5), f'{out} vs {expected}'\n"
+        },
+        {
+          "name": "2-D along dim=-1",
+          "code": "\nimport torch\nx = torch.randn(4, 8)\nout = {fn}(x, dim=-1)\nexpected = torch.softmax(x, dim=-1)\nassert out.shape == expected.shape, f'Shape mismatch'\nassert torch.allclose(out, expected, atol=1e-5), 'Values differ'\nassert torch.allclose(out.sum(dim=-1), torch.ones(4), atol=1e-5), 'Rows must sum to 1'\n"
+        },
+        {
+          "name": "Numerical stability",
+          "code": "\nimport torch\nx = torch.tensor([1000., 1001., 1002.])\nout = {fn}(x, dim=-1)\nassert not torch.isnan(out).any(), 'NaN in output \u2014 not numerically stable'\nassert not torch.isinf(out).any(), 'Inf in output \u2014 not numerically stable'\nexpected = torch.softmax(x, dim=-1)\nassert torch.allclose(out, expected, atol=1e-5), 'Values differ on large input'\n"
+        }
+      ]
+    },
+    {
+      "id": "weight_init",
+      "title": "Kaiming Initialization",
+      "difficulty": "Easy",
+      "functionName": "kaiming_init",
+      "hint": "For fan_in mode: std = sqrt(2 / fan_in) where fan_in = weight.shape[1]. Fill with normal(0, std). Return the tensor.",
+      "tests": [
+        {
+          "name": "Mean approximately 0",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nw = torch.empty(256, 512)\n{fn}(w)\nassert abs(w.mean().item()) < 0.02, f'Mean too far from 0: {w.mean().item():.4f}'\n"
+        },
+        {
+          "name": "Std matches sqrt(2/fan_in)",
+          "code": "\nimport torch, math\ntorch.manual_seed(0)\nfan_in = 1024\nw = torch.empty(256, fan_in)\n{fn}(w)\nexpected = math.sqrt(2.0 / fan_in)\nassert abs(w.std().item() - expected) < 0.005, f'Std {w.std().item():.4f} vs expected {expected:.4f}'\n"
+        },
+        {
+          "name": "Returns same tensor (in-place)",
+          "code": "\nimport torch\nw = torch.empty(64, 32)\nout = {fn}(w)\nassert out is w, 'Should return the same tensor'\nassert out.shape == (64, 32), 'Shape should be unchanged'\n"
+        },
+        {
+          "name": "Smaller fan_in gives larger std",
+          "code": "\nimport torch\nw1 = torch.empty(64, 16)\nw2 = torch.empty(64, 256)\n{fn}(w1)\n{fn}(w2)\nassert w1.std().item() > w2.std().item(), 'Smaller fan_in should give larger std'\n"
+        }
+      ]
+    },
+    {
+      "id": "adam",
+      "title": "Adam Optimizer",
+      "difficulty": "Medium",
+      "functionName": "MyAdam",
+      "hint": "Track m (1st moment) and v (2nd moment). m = beta1*m + (1-beta1)*grad, v = beta2*v + (1-beta2)*grad^2. Bias correct: m_hat = m/(1-beta1^t). Update: p -= lr * m_hat / (sqrt(v_hat) + eps).",
+      "tests": [
+        {
+          "name": "Parameters change after step",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nw = torch.randn(4, 3, requires_grad=True)\nopt = {fn}([w], lr=0.01)\n(w ** 2).sum().backward()\nw_before = w.data.clone()\nopt.step()\nassert not torch.equal(w.data, w_before), 'Should change after step'\n"
+        },
+        {
+          "name": "Matches torch.optim.Adam",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nw1 = torch.randn(8, 4, requires_grad=True)\nw2 = w1.data.clone().requires_grad_(True)\nopt1 = {fn}([w1], lr=0.001, betas=(0.9, 0.999), eps=1e-8)\nopt2 = torch.optim.Adam([w2], lr=0.001, betas=(0.9, 0.999), eps=1e-8)\nfor _ in range(5):\n    (w1 ** 2).sum().backward()\n    opt1.step(); opt1.zero_grad()\n    (w2 ** 2).sum().backward()\n    opt2.step(); opt2.zero_grad()\nassert torch.allclose(w1.data, w2.data, atol=1e-5), f'Max diff: {(w1.data-w2.data).abs().max():.6f}'\n"
+        },
+        {
+          "name": "zero_grad works",
+          "code": "\nimport torch\nw = torch.randn(4, requires_grad=True)\nopt = {fn}([w], lr=0.01)\n(w ** 2).sum().backward()\nassert w.grad.abs().sum() > 0\nopt.zero_grad()\nassert w.grad.abs().sum() == 0, 'zero_grad should zero all gradients'\n"
+        }
+      ]
+    },
+    {
+      "id": "batchnorm",
+      "title": "Implement BatchNorm",
+      "difficulty": "Medium",
+      "functionName": "my_batch_norm",
+      "hint": "Implement train/eval BatchNorm: in training, use batch stats over dim=0 and update running_mean/running_var with momentum; in inference, normalize using the running statistics only.",
+      "tests": [
+        {
+          "name": "Training mode \u2014 zero mean per feature",
+          "code": "\nimport torch\nx = torch.randn(8, 4)\ngamma = torch.ones(4)\nbeta = torch.zeros(4)\nrunning_mean = torch.zeros(4)\nrunning_var = torch.ones(4)\nout = {fn}(x, gamma, beta, running_mean, running_var, training=True)\nassert out.shape == x.shape, f'Shape mismatch: {out.shape}'\ncol_means = out.mean(dim=0)\nassert torch.allclose(col_means, torch.zeros(4), atol=1e-5), f'Column means not zero: {col_means}'\n"
+        },
+        {
+          "name": "Training mode \u2014 numerical correctness and running stats update",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nx = torch.randn(16, 8)\ngamma = torch.randn(8)\nbeta = torch.randn(8)\nrunning_mean = torch.zeros(8)\nrunning_var = torch.ones(8)\nmomentum = 0.1\nout = {fn}(x, gamma, beta, running_mean, running_var, momentum=momentum, training=True)\n\n# Reference using batch stats\nmean = x.mean(dim=0)\nvar = x.var(dim=0, unbiased=False)\nref = gamma * (x - mean) / torch.sqrt(var + 1e-5) + beta\nassert torch.allclose(out, ref, atol=1e-4), 'Value mismatch'\n\n# Running stats should have moved toward batch stats\nexpected_mean = (1 - momentum) * torch.zeros_like(mean) + momentum * mean\nexpected_var = (1 - momentum) * torch.ones_like(var) + momentum * var\nassert torch.allclose(running_mean, expected_mean, atol=1e-6), 'running_mean not updated correctly'\nassert torch.allclose(running_var, expected_var, atol=1e-6), 'running_var not updated correctly'\n"
+        },
+        {
+          "name": "Inference mode \u2014 uses running statistics",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nx = torch.randn(4, 8)\ngamma = torch.randn(8)\nbeta = torch.randn(8)\n\n# Pretend these came from previous training\nrunning_mean = torch.randn(8)\nrunning_var = torch.rand(8) + 0.5  # positive\n\nout = {fn}(x, gamma, beta, running_mean.clone(), running_var.clone(), training=False)\nref = gamma * (x - running_mean) / torch.sqrt(running_var + 1e-5) + beta\nassert torch.allclose(out, ref, atol=1e-4), 'Inference should use running stats'\n"
+        },
+        {
+          "name": "Gradient flow w.r.t inputs and affine params",
+          "code": "\nimport torch\nx = torch.randn(4, 8, requires_grad=True)\ngamma = torch.ones(8, requires_grad=True)\nbeta = torch.zeros(8, requires_grad=True)\nrunning_mean = torch.zeros(8)\nrunning_var = torch.ones(8)\nout = {fn}(x, gamma, beta, running_mean, running_var, training=True)\nout.sum().backward()\nassert x.grad is not None, 'x.grad is None'\nassert gamma.grad is not None, 'gamma.grad is None'\nassert beta.grad is not None, 'beta.grad is None'\n"
+        }
+      ]
+    },
+    {
+      "id": "beam_search",
+      "title": "Beam Search Decoding",
+      "difficulty": "Medium",
+      "functionName": "beam_search",
+      "hint": "Maintain beam_width hypotheses. Each step: expand each hypothesis with all tokens, keep top beam_width by total score. Stop when all beams end with eos or max_len reached.",
+      "tests": [
+        {
+          "name": "Returns list starting with start_token",
+          "code": "\nimport torch\ndef dummy(tokens): return torch.zeros(10)\nseq = {fn}(dummy, start_token=0, max_len=5, beam_width=3, eos_token=9)\nassert isinstance(seq, list), 'Must return a list'\nassert seq[0] == 0, f'First token: {seq[0]}'\n"
+        },
+        {
+          "name": "Greedy path (beam=1)",
+          "code": "\nimport torch\ndef greedy_fn(tokens):\n    lp = torch.full((5,), -10.0)\n    lp[min(len(tokens), 4)] = 0.0\n    return lp\nseq = {fn}(greedy_fn, start_token=0, max_len=5, beam_width=1, eos_token=4)\nassert seq == [0, 1, 2, 3, 4], f'Greedy: {seq}'\n"
+        },
+        {
+          "name": "Beam finds better path than greedy",
+          "code": "\nimport torch\ndef tricky(tokens):\n    lp = torch.full((6,), -100.0)\n    if len(tokens) == 1:\n        lp[1] = -1.0; lp[2] = -0.5\n    elif tokens[-1] == 1:\n        lp[5] = 0.0\n    elif tokens[-1] == 2:\n        lp[5] = -10.0\n    else:\n        lp[5] = 0.0\n    return lp\nseq = {fn}(tricky, start_token=0, max_len=5, beam_width=2, eos_token=5)\nassert seq == [0, 1, 5], f'Beam should find [0,1,5], got {seq}'\n"
+        },
+        {
+          "name": "Stops at eos",
+          "code": "\nimport torch\ndef eos_fn(tokens):\n    lp = torch.zeros(4); lp[3] = 10.0; return lp\nseq = {fn}(eos_fn, start_token=0, max_len=100, beam_width=2, eos_token=3)\nassert seq[-1] == 3 and len(seq) == 2, f'Should be [0,3], got {seq}'\n"
+        }
+      ]
+    },
+    {
+      "id": "conv2d",
+      "title": "2D Convolution",
+      "difficulty": "Medium",
+      "functionName": "my_conv2d",
+      "hint": "Extract patches using unfold or nested loops. For each output position, sum(patch * kernel). Support stride and padding (zero-pad with F.pad).",
+      "tests": [
+        {
+          "name": "Output shape",
+          "code": "\nimport torch\nx = torch.randn(1, 3, 8, 8)\nw = torch.randn(16, 3, 3, 3)\nout = {fn}(x, w)\nassert out.shape == (1, 16, 6, 6), f'Shape: {out.shape}'\n"
+        },
+        {
+          "name": "Matches F.conv2d",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nx = torch.randn(2, 3, 8, 8)\nw = torch.randn(4, 3, 3, 3)\nb = torch.randn(4)\nout = {fn}(x, w, b)\nref = torch.nn.functional.conv2d(x, w, b)\nassert torch.allclose(out, ref, atol=1e-4), f'Max diff: {(out-ref).abs().max():.6f}'\n"
+        },
+        {
+          "name": "With padding",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nx = torch.randn(1, 1, 5, 5)\nw = torch.randn(1, 1, 3, 3)\nout = {fn}(x, w, padding=1)\nref = torch.nn.functional.conv2d(x, w, padding=1)\nassert out.shape == ref.shape and torch.allclose(out, ref, atol=1e-4), 'Padding mismatch'\n"
+        },
+        {
+          "name": "With stride",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nx = torch.randn(1, 1, 8, 8)\nw = torch.randn(1, 1, 3, 3)\nout = {fn}(x, w, stride=2)\nref = torch.nn.functional.conv2d(x, w, stride=2)\nassert out.shape == ref.shape and torch.allclose(out, ref, atol=1e-4), 'Stride mismatch'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nx = torch.randn(1, 1, 4, 4, requires_grad=True)\nw = torch.randn(2, 1, 3, 3, requires_grad=True)\n{fn}(x, w).sum().backward()\nassert x.grad is not None and w.grad is not None, 'Missing gradients'\n"
+        }
+      ]
+    },
+    {
+      "id": "cosine_lr",
+      "title": "Cosine LR Scheduler with Warmup",
+      "difficulty": "Medium",
+      "functionName": "cosine_lr_schedule",
+      "hint": "Warmup: linear ramp from 0 to max_lr over warmup_steps. Then cosine decay: min_lr + 0.5*(max_lr-min_lr)*(1+cos(pi*progress)).",
+      "tests": [
+        {
+          "name": "Start of warmup",
+          "code": "\nlr = {fn}(step=0, total_steps=100, warmup_steps=10, max_lr=0.001, min_lr=0.0)\nassert abs(lr) < 1e-8, f'lr at step 0: {lr}'\n"
+        },
+        {
+          "name": "End of warmup",
+          "code": "\nlr = {fn}(step=10, total_steps=100, warmup_steps=10, max_lr=0.001)\nassert abs(lr - 0.001) < 1e-8, f'lr at warmup end: {lr}'\n"
+        },
+        {
+          "name": "End of schedule",
+          "code": "\nlr = {fn}(step=100, total_steps=100, warmup_steps=10, max_lr=0.001, min_lr=0.0001)\nassert abs(lr - 0.0001) < 1e-6, f'lr at end: {lr}'\n"
+        },
+        {
+          "name": "Warmup is monotonically increasing",
+          "code": "\nlrs = [{fn}(step=i, total_steps=100, warmup_steps=10, max_lr=0.001) for i in range(11)]\nfor i in range(len(lrs) - 1):\n    assert lrs[i] <= lrs[i+1] + 1e-10, f'Not increasing at step {i}'\n"
+        },
+        {
+          "name": "Cosine shape",
+          "code": "\nimport math\nlr = {fn}(step=55, total_steps=100, warmup_steps=10, max_lr=0.001, min_lr=0.0)\nprogress = (55 - 10) / (100 - 10)\nexpected = 0.5 * 0.001 * (1 + math.cos(math.pi * progress))\nassert abs(lr - expected) < 1e-8, f'{lr} vs {expected}'\n"
+        }
+      ]
+    },
+    {
+      "id": "cross_attention",
+      "title": "Multi-Head Cross-Attention",
+      "difficulty": "Medium",
+      "functionName": "MultiHeadCrossAttention",
+      "hint": "Q from decoder (x_q), K/V from encoder (x_kv). Project, reshape to multi-head, compute scaled dot-product attention (no causal mask). Concat heads and project output.",
+      "tests": [
+        {
+          "name": "Output shape",
+          "code": "\nimport torch, torch.nn as nn\nattn = {fn}(d_model=64, num_heads=4)\nassert isinstance(attn, nn.Module), 'Must inherit from nn.Module'\nout = attn(torch.randn(2, 6, 64), torch.randn(2, 10, 64))\nassert out.shape == (2, 6, 64), f'Output shape: {out.shape}'\n"
+        },
+        {
+          "name": "Q and KV different lengths",
+          "code": "\nimport torch\nattn = {fn}(d_model=32, num_heads=2)\nout = attn(torch.randn(1, 3, 32), torch.randn(1, 20, 32))\nassert out.shape == (1, 3, 32), f'Shape: {out.shape}'\n"
+        },
+        {
+          "name": "No causal mask \u2014 all KV affects all Q",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nattn = {fn}(d_model=32, num_heads=2)\nx_q = torch.randn(1, 4, 32)\nx_kv = torch.randn(1, 6, 32)\nout1 = attn(x_q, x_kv)\nx_kv2 = x_kv.clone()\nx_kv2[:, -1] = torch.randn(1, 32)\nout2 = attn(x_q, x_kv2)\nassert not torch.allclose(out1[:, 0], out2[:, 0], atol=1e-5), 'Changing last KV should affect all Q positions'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nattn = {fn}(d_model=32, num_heads=2)\nx_q = torch.randn(1, 4, 32, requires_grad=True)\nx_kv = torch.randn(1, 6, 32, requires_grad=True)\nattn(x_q, x_kv).sum().backward()\nassert x_q.grad is not None and x_kv.grad is not None, 'Missing gradients'\n"
+        }
+      ]
+    },
+    {
+      "id": "layernorm",
+      "title": "Implement LayerNorm",
+      "difficulty": "Medium",
+      "functionName": "my_layer_norm",
+      "hint": "Normalize over the last dim: (x - mean) / sqrt(var + eps), then scale by gamma and shift by beta.",
+      "tests": [
+        {
+          "name": "Shape and basic behavior",
+          "code": "\nimport torch\nx = torch.randn(2, 3, 8)\ngamma = torch.ones(8)\nbeta = torch.zeros(8)\nout = {fn}(x, gamma, beta)\nassert out.shape == x.shape, f'Shape mismatch: {out.shape}'\nref = torch.nn.functional.layer_norm(x, [8], gamma, beta)\nassert torch.allclose(out, ref, atol=1e-4), 'Value mismatch vs F.layer_norm'\n"
+        },
+        {
+          "name": "With learned parameters",
+          "code": "\nimport torch\nx = torch.randn(4, 16)\ngamma = torch.randn(16)\nbeta = torch.randn(16)\nout = {fn}(x, gamma, beta)\nref = torch.nn.functional.layer_norm(x, [16], gamma, beta)\nassert torch.allclose(out, ref, atol=1e-4), 'Value mismatch with non-trivial gamma/beta'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nx = torch.randn(2, 8, requires_grad=True)\ngamma = torch.ones(8, requires_grad=True)\nbeta = torch.zeros(8, requires_grad=True)\nout = {fn}(x, gamma, beta)\nout.sum().backward()\nassert x.grad is not None, 'x.grad is None'\nassert gamma.grad is not None, 'gamma.grad is None'\n"
+        }
+      ]
+    },
+    {
+      "id": "linear",
+      "title": "Simple Linear Layer",
+      "difficulty": "Medium",
+      "functionName": "SimpleLinear",
+      "hint": "y = x @ W^T + b. Initialize weight with Kaiming scaling: randn * (1/sqrt(in_features)).",
+      "tests": [
+        {
+          "name": "Weight & bias shape",
+          "code": "\nimport torch\nlayer = {fn}(8, 4)\nassert layer.weight.shape == (4, 8), f'Weight shape: {layer.weight.shape}'\nassert layer.bias.shape == (4,), f'Bias shape: {layer.bias.shape}'\nassert layer.weight.requires_grad, 'weight must require grad'\nassert layer.bias.requires_grad, 'bias must require grad'\n"
+        },
+        {
+          "name": "Forward pass",
+          "code": "\nimport torch\nlayer = {fn}(8, 4)\nx = torch.randn(2, 8)\ny = layer.forward(x)\nassert y.shape == (2, 4), f'Output shape: {y.shape}'\nexpected = x @ layer.weight.T + layer.bias\nassert torch.allclose(y, expected, atol=1e-5), 'Forward != x @ W^T + b'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nlayer = {fn}(8, 4)\nx = torch.randn(2, 8)\ny = layer.forward(x)\ny.sum().backward()\nassert layer.weight.grad is not None, 'weight.grad is None'\nassert layer.bias.grad is not None, 'bias.grad is None'\n"
+        }
+      ]
+    },
+    {
+      "id": "linear_regression",
+      "title": "Linear Regression",
+      "difficulty": "Medium",
+      "functionName": "LinearRegression",
+      "hint": "Closed-form: augment X with ones column, solve w = (X^T X)^{-1} X^T y via torch.linalg.lstsq. Gradient descent: grad_w = (2/N) * X^T @ (pred - y), update w -= lr * grad_w. nn.Linear: create nn.Linear(D, 1), use MSELoss + optimizer.step() loop.",
+      "tests": [
+        {
+          "name": "Closed-form returns correct shapes",
+          "code": "\nimport torch\ntorch.manual_seed(42)\nX = torch.randn(50, 3)\ny = X @ torch.tensor([2.0, -1.0, 0.5]) + 3.0 + torch.randn(50) * 0.01\nmodel = {fn}()\nw, b = model.closed_form(X, y)\nassert w.shape == (3,), f'w shape: {w.shape}, expected (3,)'\nassert b.shape == (), f'b shape: {b.shape}, expected scalar'\n"
+        },
+        {
+          "name": "Closed-form finds correct weights",
+          "code": "\nimport torch\ntorch.manual_seed(42)\ntrue_w = torch.tensor([2.0, -1.0, 0.5])\ntrue_b = 3.0\nX = torch.randn(100, 3)\ny = X @ true_w + true_b\nmodel = {fn}()\nw, b = model.closed_form(X, y)\nassert torch.allclose(w, true_w, atol=1e-4), f'w: {w} vs true: {true_w}'\nassert torch.allclose(b, torch.tensor(true_b), atol=1e-4), f'b: {b.item():.4f} vs true: {true_b}'\n"
+        },
+        {
+          "name": "Gradient descent converges",
+          "code": "\nimport torch\ntorch.manual_seed(42)\ntrue_w = torch.tensor([2.0, -1.0, 0.5])\ntrue_b = 3.0\nX = torch.randn(100, 3)\ny = X @ true_w + true_b\nmodel = {fn}()\nw, b = model.gradient_descent(X, y, lr=0.05, steps=2000)\nassert torch.allclose(w, true_w, atol=0.1), f'GD w: {w} vs true: {true_w}'\nassert abs(b.item() - true_b) < 0.1, f'GD b: {b.item():.4f} vs true: {true_b}'\n"
+        },
+        {
+          "name": "nn.Linear approach works",
+          "code": "\nimport torch\ntorch.manual_seed(42)\ntrue_w = torch.tensor([2.0, -1.0, 0.5])\ntrue_b = 3.0\nX = torch.randn(100, 3)\ny = X @ true_w + true_b\nmodel = {fn}()\nw, b = model.nn_linear(X, y, lr=0.05, steps=2000)\nassert torch.allclose(w, true_w, atol=0.1), f'nn w: {w} vs true: {true_w}'\nassert abs(b.item() - true_b) < 0.1, f'nn b: {b.item():.4f} vs true: {true_b}'\n"
+        },
+        {
+          "name": "All three methods agree",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nX = torch.randn(200, 2)\ntrue_w = torch.tensor([1.5, -2.0])\ny = X @ true_w + 1.0 + torch.randn(200) * 0.1\nmodel = {fn}()\nw_cf, b_cf = model.closed_form(X, y)\nw_gd, b_gd = model.gradient_descent(X, y, lr=0.05, steps=3000)\nw_nn, b_nn = model.nn_linear(X, y, lr=0.05, steps=3000)\nassert torch.allclose(w_cf, w_gd, atol=0.15), f'CF vs GD: max diff {(w_cf - w_gd).abs().max():.4f}'\nassert torch.allclose(w_cf, w_nn, atol=0.15), f'CF vs NN: max diff {(w_cf - w_nn).abs().max():.4f}'\nassert abs(b_cf.item() - b_gd.item()) < 0.15, f'Bias CF vs GD: {b_cf.item():.4f} vs {b_gd.item():.4f}'\nassert abs(b_cf.item() - b_nn.item()) < 0.15, f'Bias CF vs NN: {b_cf.item():.4f} vs {b_nn.item():.4f}'\n"
+        },
+        {
+          "name": "Closed-form uses no autograd",
+          "code": "\nimport torch\nX = torch.randn(30, 2)\ny = X @ torch.tensor([1.0, 2.0]) + 0.5\nmodel = {fn}()\nw, b = model.closed_form(X, y)\nassert not w.requires_grad, 'Closed-form w should not require grad'\n"
+        }
+      ]
+    },
+    {
+      "id": "lora",
+      "title": "LoRA (Low-Rank Adaptation)",
+      "difficulty": "Medium",
+      "functionName": "LoRALinear",
+      "hint": "Freeze base linear. Add lora_A (rank, in) and lora_B (out, rank) as Parameters. B init to zeros. output = linear(x) + (x @ A^T @ B^T) * (alpha/rank).",
+      "tests": [
+        {
+          "name": "Base weights frozen",
+          "code": "\nimport torch, torch.nn as nn\nlayer = {fn}(in_features=16, out_features=8, rank=4)\nassert isinstance(layer, nn.Module)\nassert not layer.linear.weight.requires_grad, 'Base weight must be frozen'\nassert not layer.linear.bias.requires_grad, 'Base bias must be frozen'\n"
+        },
+        {
+          "name": "LoRA parameter shapes",
+          "code": "\nimport torch\nlayer = {fn}(in_features=16, out_features=8, rank=4)\nassert layer.lora_A.shape == (4, 16), f'lora_A: {layer.lora_A.shape}'\nassert layer.lora_B.shape == (8, 4), f'lora_B: {layer.lora_B.shape}'\n"
+        },
+        {
+          "name": "B=0 means output equals base",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nlayer = {fn}(in_features=8, out_features=4, rank=2)\nx = torch.randn(2, 8)\nassert torch.allclose(layer(x), layer.linear(x), atol=1e-5), 'With B=0, should equal base'\n"
+        },
+        {
+          "name": "Only LoRA params get gradients",
+          "code": "\nimport torch\nlayer = {fn}(in_features=8, out_features=4, rank=2)\nlayer(torch.randn(2, 8)).sum().backward()\nassert layer.lora_A.grad is not None, 'lora_A.grad is None'\nassert layer.lora_B.grad is not None, 'lora_B.grad is None'\nassert layer.linear.weight.grad is None, 'Base weight should not have grad'\n"
+        },
+        {
+          "name": "Forward computation",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nlayer = {fn}(in_features=8, out_features=4, rank=2, alpha=2.0)\nlayer.lora_B.data.normal_()\nx = torch.randn(3, 8)\nref = layer.linear(x) + (x @ layer.lora_A.T @ layer.lora_B.T) * (2.0 / 2)\nassert torch.allclose(layer(x), ref, atol=1e-5), 'Forward mismatch'\n"
+        }
+      ]
+    },
+    {
+      "id": "mlp",
+      "title": "SwiGLU MLP",
+      "difficulty": "Medium",
+      "functionName": "SwiGLUMLP",
+      "hint": "Three nn.Linear layers: gate_proj(d, d_ff), up_proj(d, d_ff), down_proj(d_ff, d). forward(x) = down_proj(silu(gate_proj(x)) * up_proj(x)). SiLU(x) = x * sigmoid(x).",
+      "tests": [
+        {
+          "name": "Parameter shapes",
+          "code": "\nimport torch, torch.nn as nn\nmlp = {fn}(d_model=64, d_ff=128)\nassert isinstance(mlp, nn.Module), 'Must inherit from nn.Module'\nassert hasattr(mlp, 'gate_proj'), 'Need self.gate_proj'\nassert hasattr(mlp, 'up_proj'), 'Need self.up_proj'\nassert hasattr(mlp, 'down_proj'), 'Need self.down_proj'\nassert mlp.gate_proj.weight.shape == (128, 64), f'gate_proj shape: {mlp.gate_proj.weight.shape}'\nassert mlp.up_proj.weight.shape == (128, 64), f'up_proj shape: {mlp.up_proj.weight.shape}'\nassert mlp.down_proj.weight.shape == (64, 128), f'down_proj shape: {mlp.down_proj.weight.shape}'\n"
+        },
+        {
+          "name": "Forward output shape",
+          "code": "\nimport torch\nmlp = {fn}(d_model=32, d_ff=64)\nx = torch.randn(2, 8, 32)\nout = mlp(x)\nassert out.shape == (2, 8, 32), f'Output shape: {out.shape}'\n"
+        },
+        {
+          "name": "Numerical correctness",
+          "code": "\nimport torch, torch.nn.functional as F\ntorch.manual_seed(0)\nmlp = {fn}(d_model=16, d_ff=32)\nx = torch.randn(1, 4, 16)\nout = mlp(x)\ngate = mlp.gate_proj(x)\nup = mlp.up_proj(x)\nref = mlp.down_proj(F.silu(gate) * up)\nassert torch.allclose(out, ref, atol=1e-5), 'Output != down(silu(gate(x)) * up(x))'\n"
+        },
+        {
+          "name": "2-D input",
+          "code": "\nimport torch\nmlp = {fn}(d_model=32, d_ff=64)\nx = torch.randn(4, 32)\nout = mlp(x)\nassert out.shape == (4, 32), f'2-D output shape: {out.shape}'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nmlp = {fn}(d_model=32, d_ff=64)\nx = torch.randn(2, 4, 32, requires_grad=True)\nmlp(x).sum().backward()\nassert x.grad is not None, 'x.grad is None'\nn_total = sum(1 for p in mlp.parameters())\nn_grad = sum(1 for p in mlp.parameters() if p.grad is not None)\nassert n_grad == n_total, f'Only {n_grad}/{n_total} params got gradients'\n"
+        }
+      ]
+    },
+    {
+      "id": "rmsnorm",
+      "title": "Implement RMSNorm",
+      "difficulty": "Medium",
+      "functionName": "rms_norm",
+      "hint": "RMS(x) = sqrt(mean(x^2) + eps). RMSNorm(x) = x / RMS(x) * weight. Simpler than LayerNorm \u2014 no mean subtraction.",
+      "tests": [
+        {
+          "name": "Basic behavior",
+          "code": "\nimport torch\nx = torch.randn(2, 8)\nweight = torch.ones(8)\nout = {fn}(x, weight)\nassert out.shape == x.shape, f'Shape mismatch: {out.shape}'\nrms = torch.sqrt(x.pow(2).mean(dim=-1, keepdim=True) + 1e-6)\nref = x / rms * weight\nassert torch.allclose(out, ref, atol=1e-5), 'Value mismatch'\n"
+        },
+        {
+          "name": "With learned weight",
+          "code": "\nimport torch\nx = torch.randn(4, 16)\nweight = torch.randn(16)\nout = {fn}(x, weight)\nrms = torch.sqrt(x.pow(2).mean(dim=-1, keepdim=True) + 1e-6)\nref = x / rms * weight\nassert torch.allclose(out, ref, atol=1e-5), 'Value mismatch with non-trivial weight'\n"
+        },
+        {
+          "name": "3-D input",
+          "code": "\nimport torch\nx = torch.randn(2, 4, 32)\nweight = torch.ones(32)\nout = {fn}(x, weight)\nassert out.shape == x.shape, f'Shape mismatch on 3-D: {out.shape}'\nrms = torch.sqrt(x.pow(2).mean(dim=-1, keepdim=True) + 1e-6)\nref = x / rms * weight\nassert torch.allclose(out, ref, atol=1e-5), 'Value mismatch on 3-D'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nx = torch.randn(2, 8, requires_grad=True)\nweight = torch.ones(8, requires_grad=True)\nout = {fn}(x, weight)\nout.sum().backward()\nassert x.grad is not None, 'x.grad is None'\nassert weight.grad is not None, 'weight.grad is None'\n"
+        }
+      ]
+    },
+    {
+      "id": "topk_sampling",
+      "title": "Top-k / Top-p Sampling",
+      "difficulty": "Medium",
+      "functionName": "sample_top_k_top_p",
+      "hint": "Apply temperature first. For top-k: set logits below the k-th largest to -inf. For top-p: sort, compute cumsum of probs, mask where cumsum > p. Then sample from softmax.",
+      "tests": [
+        {
+          "name": "top_k=1 always returns argmax",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nlogits = torch.tensor([1.0, 5.0, 2.0, 0.5])\nfor _ in range(10):\n    assert {fn}(logits.clone(), top_k=1) == 1, 'top_k=1 should return argmax'\n"
+        },
+        {
+          "name": "Low temperature concentrates",
+          "code": "\nimport torch\ntorch.manual_seed(42)\nlogits = torch.tensor([1.0, 3.0, 2.0])\ncounts = [0, 0, 0]\nfor _ in range(100):\n    counts[{fn}(logits.clone(), temperature=0.01)] += 1\nassert counts[1] > 90, f'Low temp should pick argmax, got {counts}'\n"
+        },
+        {
+          "name": "All tokens reachable (no filtering)",
+          "code": "\nimport torch\nlogits = torch.zeros(5)\nseen = set()\nfor i in range(200):\n    torch.manual_seed(i)\n    seen.add({fn}(logits.clone()))\nassert len(seen) == 5, f'Only saw {seen}'\n"
+        },
+        {
+          "name": "Returns valid index",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nV = 100\nlogits = torch.randn(V)\nfor _ in range(20):\n    t = {fn}(logits.clone(), top_k=10, top_p=0.9)\n    assert 0 <= t < V, f'Token {t} out of range'\n"
+        }
+      ]
+    },
+    {
+      "id": "vit_patch",
+      "title": "ViT Patch Embedding",
+      "difficulty": "Medium",
+      "functionName": "PatchEmbedding",
+      "hint": "Reshape image into patches: (B, C, H, W) -> (B, num_patches, C*P*P). Then project with nn.Linear(C*P*P, embed_dim). num_patches = (img_size/patch_size)^2.",
+      "tests": [
+        {
+          "name": "Output shape",
+          "code": "\nimport torch, torch.nn as nn\npe = {fn}(img_size=32, patch_size=8, in_channels=3, embed_dim=64)\nassert isinstance(pe, nn.Module)\nout = pe(torch.randn(2, 3, 32, 32))\nassert out.shape == (2, 16, 64), f'Shape: {out.shape}, expected (2, 16, 64)'\n"
+        },
+        {
+          "name": "num_patches attribute",
+          "code": "\nimport torch\npe = {fn}(img_size=224, patch_size=16, in_channels=3, embed_dim=768)\nassert pe.num_patches == 196, f'num_patches: {pe.num_patches}'\n"
+        },
+        {
+          "name": "Different image sizes",
+          "code": "\nimport torch\npe = {fn}(img_size=64, patch_size=16, in_channels=1, embed_dim=32)\nout = pe(torch.randn(1, 1, 64, 64))\nassert out.shape == (1, 16, 32), f'Shape: {out.shape}'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\npe = {fn}(img_size=32, patch_size=8, in_channels=3, embed_dim=64)\nx = torch.randn(1, 3, 32, 32, requires_grad=True)\npe(x).sum().backward()\nassert x.grad is not None, 'x.grad is None'\n"
+        }
+      ]
+    },
+    {
+      "id": "attention",
+      "title": "Softmax Attention",
+      "difficulty": "Hard",
+      "functionName": "scaled_dot_product_attention",
+      "hint": "scores = Q @ K^T / sqrt(d_k), then softmax(scores, dim=-1) @ V. Use torch.bmm for batched matmul.",
+      "tests": [
+        {
+          "name": "Output shape",
+          "code": "\nimport torch, math\ntorch.manual_seed(42)\nB, S, D = 2, 4, 8\nQ = torch.randn(B, S, D)\nK = torch.randn(B, S, D)\nV = torch.randn(B, S, D)\nout = {fn}(Q, K, V)\nassert out.shape == (B, S, D), f'Shape mismatch: {out.shape} vs {(B, S, D)}'\n"
+        },
+        {
+          "name": "Numerical correctness",
+          "code": "\nimport torch, math\ntorch.manual_seed(42)\nB, S, D = 2, 4, 8\nQ = torch.randn(B, S, D)\nK = torch.randn(B, S, D)\nV = torch.randn(B, S, D)\nout = {fn}(Q, K, V)\nscores = torch.bmm(Q, K.transpose(1, 2)) / math.sqrt(D)\nweights = torch.softmax(scores, dim=-1)\nref = torch.bmm(weights, V)\nassert torch.allclose(out, ref, atol=1e-5), 'Value mismatch vs reference'\n"
+        },
+        {
+          "name": "Gradient check",
+          "code": "\nimport torch, math\ntorch.manual_seed(42)\nQ = torch.randn(2, 4, 8, requires_grad=True)\nK = torch.randn(2, 4, 8, requires_grad=True)\nV = torch.randn(2, 4, 8, requires_grad=True)\nout = {fn}(Q, K, V)\nout.sum().backward()\nassert Q.grad is not None, 'Q.grad is None'\nassert K.grad is not None, 'K.grad is None'\nassert V.grad is not None, 'V.grad is None'\n"
+        },
+        {
+          "name": "Cross-attention (seq_q != seq_k)",
+          "code": "\nimport torch\nQ = torch.randn(1, 3, 16)\nK = torch.randn(1, 5, 16)\nV = torch.randn(1, 5, 32)\nout = {fn}(Q, K, V)\nassert out.shape == (1, 3, 32), f'Cross-attention shape: {out.shape}'\n"
+        }
+      ]
+    },
+    {
+      "id": "bpe",
+      "title": "Byte-Pair Encoding (BPE)",
+      "difficulty": "Hard",
+      "functionName": "SimpleBPE",
+      "hint": "train: split words into chars + </w>. Iteratively find most frequent adjacent pair, merge it. encode: apply learned merges in order to split text into subwords.",
+      "tests": [
+        {
+          "name": "Correct number of merges",
+          "code": "\nbpe = {fn}()\nbpe.train(['low', 'low', 'low', 'lower', 'newest', 'widest'], num_merges=5)\nassert len(bpe.merges) == 5, f'Expected 5 merges, got {len(bpe.merges)}'\n"
+        },
+        {
+          "name": "Most frequent pair merged first",
+          "code": "\nbpe = {fn}()\nbpe.train(['aaa', 'aaa', 'aaa', 'bbb'], num_merges=1)\nassert bpe.merges[0] == ('a', 'a'), f'First merge: {bpe.merges[0]}'\n"
+        },
+        {
+          "name": "Encode returns list of strings",
+          "code": "\nbpe = {fn}()\nbpe.train(['low', 'lower', 'lowest'] * 3, num_merges=10)\ntokens = bpe.encode('low')\nassert isinstance(tokens, list), 'encode must return a list'\nassert all(isinstance(t, str) for t in tokens), 'tokens must be strings'\nreconstructed = ''.join(t.replace('</w>', '') for t in tokens)\nassert reconstructed == 'low', f'Reconstruction: {reconstructed}'\n"
+        },
+        {
+          "name": "More merges -> fewer tokens",
+          "code": "\nbpe1 = {fn}()\nbpe1.train(['hello'] * 10, num_merges=2)\nbpe2 = {fn}()\nbpe2.train(['hello'] * 10, num_merges=10)\nassert len(bpe2.encode('hello')) <= len(bpe1.encode('hello')), 'More merges should reduce tokens'\n"
+        }
+      ]
+    },
+    {
+      "id": "causal_attention",
+      "title": "Causal Self-Attention",
+      "difficulty": "Hard",
+      "functionName": "causal_attention",
+      "hint": "Same as softmax attention but mask future positions with -inf before softmax. torch.triu(..., diagonal=1) gives the upper triangle.",
+      "tests": [
+        {
+          "name": "Output shape",
+          "code": "\nimport torch\nout = {fn}(torch.randn(2, 6, 16), torch.randn(2, 6, 16), torch.randn(2, 6, 16))\nassert out.shape == (2, 6, 16), f'Shape mismatch: {out.shape}'\n"
+        },
+        {
+          "name": "Future tokens don't affect past",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nB, S, D = 1, 8, 16\nQ = torch.randn(B, S, D)\nK = torch.randn(B, S, D)\nV = torch.randn(B, S, D)\nout1 = {fn}(Q, K, V)\nK2, V2 = K.clone(), V.clone()\nK2[:, 4:] = torch.randn(B, 4, D)\nV2[:, 4:] = torch.randn(B, 4, D)\nout2 = {fn}(Q, K2, V2)\nassert torch.allclose(out1[:, :4], out2[:, :4], atol=1e-5), 'Changing future K/V affected past outputs'\n"
+        },
+        {
+          "name": "First position only sees itself",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nQ = torch.randn(1, 4, 8)\nK = torch.randn(1, 4, 8)\nV = torch.randn(1, 4, 8)\nout = {fn}(Q, K, V)\nassert torch.allclose(out[:, 0], V[:, 0], atol=1e-5), 'Position 0 should output V[0]'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nQ = torch.randn(2, 4, 8, requires_grad=True)\nK = torch.randn(2, 4, 8, requires_grad=True)\nV = torch.randn(2, 4, 8, requires_grad=True)\nout = {fn}(Q, K, V)\nout.sum().backward()\nassert Q.grad is not None and K.grad is not None and V.grad is not None, 'Missing gradients'\n"
+        }
+      ]
+    },
+    {
+      "id": "dpo_loss",
+      "title": "DPO (Direct Preference Optimization) Loss",
+      "difficulty": "Hard",
+      "functionName": "dpo_loss",
+      "hint": "L = -log(sigmoid(beta * ((pi_chosen - ref_chosen) - (pi_rejected - ref_rejected)))). Mean over batch.",
+      "tests": [
+        {
+          "name": "Easy pair: small loss",
+          "code": "\nimport torch\nchosen = torch.tensor([0.0, 0.0])\nrejected = torch.tensor([-10.0, -10.0])\nref_c = torch.tensor([-1.0, -1.0])\nref_r = torch.tensor([-1.0, -1.0])\nloss = {fn}(chosen, rejected, ref_c, ref_r, beta=0.1)\nassert loss.dim() == 0, 'Must be scalar'\nassert loss.item() < 0.5, f'Easy pair loss too high: {loss.item():.4f}'\n"
+        },
+        {
+          "name": "Hard pair: large loss",
+          "code": "\nimport torch\nloss = {fn}(torch.tensor([-10.0]), torch.tensor([0.0]),\n            torch.tensor([-1.0]), torch.tensor([-1.0]), beta=0.1)\nassert loss.item() > 0.5, f'Hard pair loss too low: {loss.item():.4f}'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nc = torch.randn(4, requires_grad=True)\nr = torch.randn(4, requires_grad=True)\n{fn}(c, r, torch.randn(4), torch.randn(4)).backward()\nassert c.grad is not None and r.grad is not None, 'Missing gradients'\n"
+        },
+        {
+          "name": "Mathematical correctness",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nc, r, rc, rr = torch.randn(3), torch.randn(3), torch.randn(3), torch.randn(3)\nbeta = 0.5\nloss = {fn}(c, r, rc, rr, beta=beta)\nref = -torch.log(torch.sigmoid(beta * ((c - rc) - (r - rr)))).mean()\nassert torch.allclose(loss, ref, atol=1e-5), f'{loss.item():.6f} vs {ref.item():.6f}'\n"
+        },
+        {
+          "name": "Beta scaling",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nc, r, rc, rr = torch.randn(4), torch.randn(4), torch.randn(4), torch.randn(4)\nl1 = {fn}(c, r, rc, rr, beta=0.1)\nl2 = {fn}(c, r, rc, rr, beta=1.0)\nassert not torch.allclose(l1, l2), 'Different beta should give different loss'\n"
+        }
+      ]
+    },
+    {
+      "id": "flash_attention",
+      "title": "Flash Attention (Tiled)",
+      "difficulty": "Hard",
+      "functionName": "flash_attention",
+      "hint": "Process Q in blocks. For each Q-block, iterate over K/V blocks. Use online softmax: track running max and sum, rescale accumulator when max changes. output = acc / row_sum.",
+      "tests": [
+        {
+          "name": "Matches standard attention",
+          "code": "\nimport torch, math\ntorch.manual_seed(0)\nB, S, D = 2, 16, 8\nQ = torch.randn(B, S, D)\nK = torch.randn(B, S, D)\nV = torch.randn(B, S, D)\nout = {fn}(Q, K, V, block_size=4)\nscores = torch.bmm(Q, K.transpose(1, 2)) / math.sqrt(D)\nref = torch.bmm(torch.softmax(scores, dim=-1), V)\nassert torch.allclose(out, ref, atol=1e-4), f'Max diff: {(out-ref).abs().max():.6f}'\n"
+        },
+        {
+          "name": "Non-aligned block size",
+          "code": "\nimport torch, math\ntorch.manual_seed(42)\nB, S, D = 1, 7, 4\nQ, K, V = torch.randn(B,S,D), torch.randn(B,S,D), torch.randn(B,S,D)\nout = {fn}(Q, K, V, block_size=3)\nscores = torch.bmm(Q, K.transpose(1, 2)) / math.sqrt(D)\nref = torch.bmm(torch.softmax(scores, dim=-1), V)\nassert torch.allclose(out, ref, atol=1e-4), 'Mismatch with non-aligned block size'\n"
+        },
+        {
+          "name": "Block size invariant",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nQ, K, V = torch.randn(1,12,8), torch.randn(1,12,8), torch.randn(1,12,8)\nout4 = {fn}(Q, K, V, block_size=4)\nout6 = {fn}(Q, K, V, block_size=6)\nassert torch.allclose(out4, out6, atol=1e-4), 'Different block sizes should give same result'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nQ = torch.randn(1, 8, 4, requires_grad=True)\nK = torch.randn(1, 8, 4, requires_grad=True)\nV = torch.randn(1, 8, 4, requires_grad=True)\n{fn}(Q, K, V, block_size=4).sum().backward()\nassert Q.grad is not None, 'Q.grad is None'\n"
+        }
+      ]
+    },
+    {
+      "id": "gpt2_block",
+      "title": "GPT-2 Transformer Block",
+      "difficulty": "Hard",
+      "functionName": "GPT2Block",
+      "hint": "Pre-norm: x = x + attn(ln1(x)), x = x + mlp(ln2(x)). MLP: Linear(d, 4d) -> GELU -> Linear(4d, d). Attention must be causal. Inherit from nn.Module.",
+      "tests": [
+        {
+          "name": "Output shape",
+          "code": "\nimport torch, torch.nn as nn\ntorch.manual_seed(0)\nblock = {fn}(d_model=64, num_heads=4)\nassert isinstance(block, nn.Module), 'GPT2Block should inherit from nn.Module'\nout = block(torch.randn(2, 8, 64))\nassert out.shape == (2, 8, 64), f'Shape mismatch: {out.shape}'\n"
+        },
+        {
+          "name": "Has LayerNorm (pre-norm architecture)",
+          "code": "\nimport torch, torch.nn as nn\nblock = {fn}(d_model=32, num_heads=4)\nassert hasattr(block, 'ln1') and isinstance(block.ln1, nn.LayerNorm), 'Need self.ln1 = nn.LayerNorm'\nassert hasattr(block, 'ln2') and isinstance(block.ln2, nn.LayerNorm), 'Need self.ln2 = nn.LayerNorm'\n"
+        },
+        {
+          "name": "MLP has 4x expansion with GELU",
+          "code": "\nimport torch, torch.nn as nn\nblock = {fn}(d_model=32, num_heads=4)\nassert hasattr(block, 'mlp'), 'Need self.mlp'\nlinears = [m for m in block.mlp.modules() if isinstance(m, nn.Linear)]\nassert len(linears) >= 2, f'MLP needs >= 2 Linear layers, got {len(linears)}'\nassert linears[0].weight.shape == (128, 32), f'MLP first layer: {linears[0].weight.shape}, expected (128, 32)'\nassert linears[-1].weight.shape == (32, 128), f'MLP last layer: {linears[-1].weight.shape}, expected (32, 128)'\n"
+        },
+        {
+          "name": "Causal masking \u2014 future doesn't affect past",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nblock = {fn}(d_model=32, num_heads=4)\nx = torch.randn(1, 8, 32)\nout1 = block(x)\nx2 = x.clone()\nx2[:, 4:] = torch.randn(1, 4, 32)\nout2 = block(x2)\nassert torch.allclose(out1[:, :4], out2[:, :4], atol=1e-5), 'Future tokens affected past \u2014 not causal'\n"
+        },
+        {
+          "name": "Gradient flow to all parameters",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nblock = {fn}(d_model=32, num_heads=4)\nx = torch.randn(1, 4, 32, requires_grad=True)\nblock(x).sum().backward()\nassert x.grad is not None, 'x.grad is None'\nn_total = sum(1 for p in block.parameters())\nn_grad = sum(1 for p in block.parameters() if p.grad is not None)\nassert n_grad == n_total, f'Only {n_grad}/{n_total} params got gradients'\n"
+        }
+      ]
+    },
+    {
+      "id": "gqa",
+      "title": "Grouped Query Attention",
+      "difficulty": "Hard",
+      "functionName": "GroupQueryAttention",
+      "hint": "Like MHA but fewer KV heads. W_k/W_v project to num_kv_heads * d_k dims. Use repeat_interleave to expand KV heads to match Q heads.",
+      "tests": [
+        {
+          "name": "Output shape",
+          "code": "\nimport torch\ntorch.manual_seed(0)\ngqa = {fn}(d_model=32, num_heads=8, num_kv_heads=2)\nout = gqa.forward(torch.randn(2, 6, 32))\nassert out.shape == (2, 6, 32), f'Shape mismatch: {out.shape}'\n"
+        },
+        {
+          "name": "nn.Linear with correct shapes",
+          "code": "\nimport torch, torch.nn as nn\ngqa = {fn}(d_model=32, num_heads=8, num_kv_heads=2)\nd_k = 32 // 8\nassert isinstance(gqa.W_q, nn.Linear) and gqa.W_q.weight.shape == (32, 32), f'W_q wrong'\nassert isinstance(gqa.W_k, nn.Linear) and gqa.W_k.weight.shape == (2 * d_k, 32), f'W_k shape: {gqa.W_k.weight.shape}'\nassert isinstance(gqa.W_v, nn.Linear) and gqa.W_v.weight.shape == (2 * d_k, 32), f'W_v shape: {gqa.W_v.weight.shape}'\nassert isinstance(gqa.W_o, nn.Linear), 'W_o should be nn.Linear'\n"
+        },
+        {
+          "name": "Degenerates to MHA when kv_heads == heads",
+          "code": "\nimport torch\ntorch.manual_seed(42)\ngqa = {fn}(d_model=16, num_heads=4, num_kv_heads=4)\nout = gqa.forward(torch.randn(1, 4, 16))\nassert out.shape == (1, 4, 16)\nassert gqa.W_k.weight.shape == (16, 16), 'Full KV when kv_heads == heads'\n"
+        },
+        {
+          "name": "KV heads are shared correctly",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nD, H, KV = 16, 4, 2\nd_k = D // H\ngqa = {fn}(d_model=D, num_heads=H, num_kv_heads=KV)\nx = torch.randn(1, 4, D)\nk = gqa.W_k(x).view(1, 4, KV, d_k).transpose(1, 2)\nk_exp = k.repeat_interleave(H // KV, dim=1)\nassert torch.equal(k_exp[:, 0], k_exp[:, 1]), 'Heads 0,1 should share same K'\nassert not torch.equal(k_exp[:, 0], k_exp[:, 2]), 'Different groups need different K'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\ntorch.manual_seed(0)\ngqa = {fn}(d_model=16, num_heads=4, num_kv_heads=2)\nx = torch.randn(1, 4, 16, requires_grad=True)\ngqa.forward(x).sum().backward()\nassert x.grad is not None, 'x.grad is None'\nassert gqa.W_q.weight.grad is not None and gqa.W_k.weight.grad is not None, 'Missing weight gradients'\n"
+        }
+      ]
+    },
+    {
+      "id": "grpo_loss",
+      "title": "GRPO (Group Relative Policy Optimization) Loss",
+      "difficulty": "Hard",
+      "functionName": "grpo_loss",
+      "hint": "Per group, normalize rewards: A_i = (r_i - mean_g) / (std_g + eps). Detach A_i from graph, then return -mean(A_i * logps).",
+      "tests": [
+        {
+          "name": "Basic shape & type",
+          "code": "\nimport torch\nfrom torch import Tensor\nlogps = torch.randn(6, requires_grad=True)\nrewards = torch.randn(6)\ngroup_ids = torch.tensor([0, 0, 0, 1, 1, 1])\nloss = {fn}(logps, rewards, group_ids)\nassert isinstance(loss, Tensor) and loss.dim() == 0, 'Loss must be scalar Tensor'\n"
+        },
+        {
+          "name": "Numeric check vs reference",
+          "code": "\nimport torch\nfrom torch import Tensor\n\ndef _reference_grpo_loss(logps: Tensor, rewards: Tensor, group_ids: Tensor, eps: float = 1e-5) -> Tensor:\n    # Same semantics as the reference solution: per-group z-score then -E[A_i * logp_i].\n    logps = logps.view(-1)\n    rewards = rewards.view(-1)\n    group_ids = group_ids.view(-1)\n    unique_ids = group_ids.unique()\n    advantages = torch.empty_like(rewards)\n    for gid in unique_ids:\n        mask = group_ids == gid\n        r_g = rewards[mask]\n        mean_g = r_g.mean()\n        std_g = r_g.std(unbiased=False)\n        advantages[mask] = (r_g - mean_g) / (std_g + eps)\n    advantages_detached = advantages.detach()\n    return -(advantages_detached * logps).mean()\n\nlogps = torch.tensor([0.0, -0.5, -1.0, -1.5])\nrewards = torch.tensor([1.0, 0.8, 0.2, 0.0])\ngroup_ids = torch.tensor([0, 0, 1, 1])\nloss_student = {fn}(logps, rewards, group_ids)\nloss_ref = _reference_grpo_loss(logps, rewards, group_ids)\nassert torch.allclose(loss_student, loss_ref, atol=1e-5, rtol=1e-5), 'Loss should match reference implementation numerically on a fixed example'\n"
+        },
+        {
+          "name": "Gradient flows to logps only",
+          "code": "\nimport torch\nlogps = torch.randn(4, requires_grad=True)\nrewards = torch.randn(4, requires_grad=True)\ngroup_ids = torch.tensor([0, 0, 1, 1])\nloss = {fn}(logps, rewards, group_ids)\nloss.backward()\nassert logps.grad is not None and rewards.grad is None, 'Gradients should flow only through logps'\n"
+        },
+        {
+          "name": "Group-wise normalization",
+          "code": "\nimport torch\nlogps = torch.zeros(4, requires_grad=True)\nrewards = torch.tensor([0.0, 1.0, 10.0, 11.0])\ngroup_ids = torch.tensor([0, 0, 1, 1])\nloss = {fn}(logps, rewards, group_ids)\nloss.backward()\n# Since each group has rewards [0,1] and [10,11], the normalized advantages\n# should be identical across groups, leading to identical gradients per position.\nassert torch.allclose(logps.grad[:2], logps.grad[2:]), 'Groups should be treated independently but symmetrically'\n"
+        }
+      ]
+    },
+    {
+      "id": "int8_quantization",
+      "title": "INT8 Quantized Linear",
+      "difficulty": "Hard",
+      "functionName": "Int8Linear",
+      "hint": "Per-channel scale = abs(weight).max(dim=1) / 127. Quantize: round(weight/scale).clamp(-128,127).to(int8). Forward: dequantize and matmul.",
+      "tests": [
+        {
+          "name": "Weight is int8",
+          "code": "\nimport torch, torch.nn as nn\nw = torch.randn(32, 16)\nq = {fn}(w)\nassert isinstance(q, nn.Module)\nassert q.weight_int8.dtype == torch.int8, f'dtype: {q.weight_int8.dtype}'\n"
+        },
+        {
+          "name": "Values in [-128, 127]",
+          "code": "\nimport torch\nq = {fn}(torch.randn(64, 32) * 10)\nassert q.weight_int8.min() >= -128 and q.weight_int8.max() <= 127\n"
+        },
+        {
+          "name": "Dequantized close to original",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nw = torch.randn(16, 8)\nq = {fn}(w)\nw_recon = q.weight_int8.float() * q.scale\nassert (w - w_recon).abs().max() < 0.1, 'Quantization error too large'\n"
+        },
+        {
+          "name": "Forward output shape",
+          "code": "\nimport torch\nq = {fn}(torch.randn(8, 4), torch.randn(8))\nout = q(torch.randn(2, 4))\nassert out.shape == (2, 8), f'Shape: {out.shape}'\n"
+        },
+        {
+          "name": "Weight is buffer not parameter",
+          "code": "\nimport torch\nq = {fn}(torch.randn(4, 4))\nparam_names = [n for n, _ in q.named_parameters()]\nassert 'weight_int8' not in param_names, 'weight_int8 should be a buffer'\nassert 'scale' not in param_names, 'scale should be a buffer'\n"
+        }
+      ]
+    },
+    {
+      "id": "kv_cache",
+      "title": "KV Cache Attention",
+      "difficulty": "Hard",
+      "functionName": "KVCacheAttention",
+      "hint": "Project Q/K/V, reshape to (B, num_heads, S, d_k). If cache exists, concat new K/V with cached along dim=2. Apply causal mask during prefill. Return (output, (K_all, V_all)). Cache tensors: (B, num_heads, S_total, d_k).",
+      "tests": [
+        {
+          "name": "Output shape (no cache)",
+          "code": "\nimport torch, torch.nn as nn\ntorch.manual_seed(0)\nattn = {fn}(d_model=64, num_heads=4)\nassert isinstance(attn, nn.Module), 'Must inherit from nn.Module'\nx = torch.randn(2, 8, 64)\nout, cache = attn(x)\nassert out.shape == (2, 8, 64), f'Output shape: {out.shape}'\n"
+        },
+        {
+          "name": "Cache structure",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nattn = {fn}(d_model=64, num_heads=4)\nx = torch.randn(2, 8, 64)\nout, cache = attn(x)\nassert isinstance(cache, tuple) and len(cache) == 2, 'Cache must be a (K, V) tuple'\nk_cache, v_cache = cache\nassert k_cache.shape == (2, 4, 8, 16), f'K cache shape: {k_cache.shape}, expected (2, 4, 8, 16)'\nassert v_cache.shape == (2, 4, 8, 16), f'V cache shape: {v_cache.shape}, expected (2, 4, 8, 16)'\n"
+        },
+        {
+          "name": "Decode step appends to cache",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nattn = {fn}(d_model=32, num_heads=2)\nx = torch.randn(1, 4, 32)\n_, cache = attn(x)\nnew_token = torch.randn(1, 1, 32)\nout, new_cache = attn(new_token, cache=cache)\nassert out.shape == (1, 1, 32), f'Decode output shape: {out.shape}'\nk_cache, v_cache = new_cache\nassert k_cache.shape[2] == 5, f'Cache should grow: K has {k_cache.shape[2]} positions, expected 5'\nassert v_cache.shape[2] == 5, f'Cache should grow: V has {v_cache.shape[2]} positions, expected 5'\n"
+        },
+        {
+          "name": "Incremental decode matches full forward",
+          "code": "\nimport torch\ntorch.manual_seed(42)\nattn = {fn}(d_model=32, num_heads=2)\nx = torch.randn(1, 6, 32)\nfull_out, _ = attn(x)\nout1, cache = attn(x[:, :4])\nout2, cache = attn(x[:, 4:5], cache=cache)\nout3, cache = attn(x[:, 5:6], cache=cache)\ninc_out = torch.cat([out1, out2, out3], dim=1)\nassert torch.allclose(full_out, inc_out, atol=1e-5), 'Incremental decode must match full forward'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nattn = {fn}(d_model=32, num_heads=2)\nx = torch.randn(1, 4, 32, requires_grad=True)\nout, cache = attn(x)\nout.sum().backward()\nassert x.grad is not None, 'x.grad is None'\nn_total = sum(1 for p in attn.parameters())\nn_grad = sum(1 for p in attn.parameters() if p.grad is not None)\nassert n_grad == n_total, f'Only {n_grad}/{n_total} params got gradients'\n"
+        }
+      ]
+    },
+    {
+      "id": "linear_attention",
+      "title": "Linear Self-Attention",
+      "difficulty": "Hard",
+      "functionName": "linear_attention",
+      "hint": "Feature map: phi(x) = elu(x) + 1. Compute phi(Q) @ (phi(K)^T @ V) instead of softmax(Q @ K^T) @ V. Normalize by phi(Q) @ sum(phi(K)).",
+      "tests": [
+        {
+          "name": "Output shape",
+          "code": "\nimport torch\nout = {fn}(torch.randn(2, 8, 16), torch.randn(2, 8, 16), torch.randn(2, 8, 32))\nassert out.shape == (2, 8, 32), f'Shape mismatch: {out.shape}'\n"
+        },
+        {
+          "name": "No NaN or Inf",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nout = {fn}(torch.randn(2, 16, 8), torch.randn(2, 16, 8), torch.randn(2, 16, 8))\nassert not torch.isnan(out).any(), 'NaN in output'\nassert not torch.isinf(out).any(), 'Inf in output'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nQ = torch.randn(1, 4, 8, requires_grad=True)\nK = torch.randn(1, 4, 8, requires_grad=True)\nV = torch.randn(1, 4, 8, requires_grad=True)\n{fn}(Q, K, V).sum().backward()\nassert Q.grad is not None and K.grad is not None and V.grad is not None, 'Missing gradients'\n"
+        },
+        {
+          "name": "Runs fast on long sequences (linear complexity)",
+          "code": "\nimport torch, time\ntorch.manual_seed(0)\nQ = torch.randn(1, 2048, 64)\nK = torch.randn(1, 2048, 64)\nV = torch.randn(1, 2048, 64)\nt0 = time.perf_counter()\nfor _ in range(10):\n    {fn}(Q, K, V)\nelapsed = time.perf_counter() - t0\nassert elapsed < 5.0, f'Too slow: {elapsed:.2f}s \u2014 should be O(S*D^2) not O(S^2*D)'\n"
+        }
+      ]
+    },
+    {
+      "id": "mha",
+      "title": "Multi-Head Attention",
+      "difficulty": "Hard",
+      "functionName": "MultiHeadAttention",
+      "hint": "Use nn.Linear for Q/K/V/O projections. d_k = d_model // num_heads. Reshape to (B, heads, S, d_k), SDPA per head, concat, output projection.",
+      "tests": [
+        {
+          "name": "Output shape",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nB, S, D, H = 2, 6, 32, 4\nmha = {fn}(d_model=D, num_heads=H)\nx = torch.randn(B, S, D)\nout = mha.forward(x, x, x)\nassert out.shape == (B, S, D), f'Shape mismatch: {out.shape} vs {(B, S, D)}'\n"
+        },
+        {
+          "name": "Uses nn.Linear with correct shapes",
+          "code": "\nimport torch, torch.nn as nn\nmha = {fn}(d_model=32, num_heads=4)\nfor name in ['W_q', 'W_k', 'W_v', 'W_o']:\n    layer = getattr(mha, name)\n    assert isinstance(layer, nn.Linear), f'{name} should be nn.Linear, got {type(layer)}'\n    assert layer.weight.shape == (32, 32), f'{name}.weight shape: {layer.weight.shape}'\n    assert layer.weight.requires_grad, f'{name}.weight must require grad'\n"
+        },
+        {
+          "name": "Numerical correctness vs reference",
+          "code": "\nimport torch, torch.nn as nn, math\ntorch.manual_seed(0)\nD, H = 16, 2\nd_k = D // H\nmha = {fn}(d_model=D, num_heads=H)\nQ = torch.randn(1, 4, D)\nK = torch.randn(1, 4, D)\nV = torch.randn(1, 4, D)\nout = mha.forward(Q, K, V)\nq = mha.W_q(Q).view(1, 4, H, d_k).transpose(1, 2)\nk = mha.W_k(K).view(1, 4, H, d_k).transpose(1, 2)\nv = mha.W_v(V).view(1, 4, H, d_k).transpose(1, 2)\nscores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(d_k)\nweights = torch.softmax(scores, dim=-1)\nattn = torch.matmul(weights, v)\nref = mha.W_o(attn.transpose(1, 2).contiguous().view(1, 4, D))\nassert torch.allclose(out, ref, atol=1e-5), 'Output does not match reference'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nmha = {fn}(d_model=16, num_heads=2)\nx = torch.randn(1, 4, 16, requires_grad=True)\nout = mha.forward(x, x, x)\nout.sum().backward()\nassert x.grad is not None, 'x.grad is None'\nassert mha.W_q.weight.grad is not None, 'W_q.weight.grad is None'\nassert mha.W_o.weight.grad is not None, 'W_o.weight.grad is None'\n"
+        },
+        {
+          "name": "Cross-attention (seq_q != seq_k)",
+          "code": "\nimport torch\nmha = {fn}(d_model=32, num_heads=4)\nQ = torch.randn(1, 3, 32)\nK = torch.randn(1, 7, 32)\nV = torch.randn(1, 7, 32)\nout = mha.forward(Q, K, V)\nassert out.shape == (1, 3, 32), f'Cross-attention shape: {out.shape}'\n"
+        },
+        {
+          "name": "Different heads give different outputs",
+          "code": "\nimport torch\ntorch.manual_seed(42)\nD, H = 16, 4\nd_k = D // H\nmha = {fn}(d_model=D, num_heads=H)\nx = torch.randn(1, 4, D)\nq = mha.W_q(x).view(1, 4, H, d_k).transpose(1, 2)\nassert not torch.allclose(q[:, 0], q[:, 1], atol=1e-3), 'Heads produce identical queries'\n"
+        }
+      ]
+    },
+    {
+      "id": "moe",
+      "title": "Mixture of Experts (MoE)",
+      "difficulty": "Hard",
+      "functionName": "MixtureOfExperts",
+      "hint": "Router: Linear(d, num_experts) -> topk -> softmax. Each expert: Linear->ReLU->Linear. Weighted sum of top-k expert outputs per token.",
+      "tests": [
+        {
+          "name": "Output shape",
+          "code": "\nimport torch, torch.nn as nn\nmoe = {fn}(d_model=32, d_ff=64, num_experts=4, top_k=2)\nassert isinstance(moe, nn.Module)\nout = moe(torch.randn(2, 8, 32))\nassert out.shape == (2, 8, 32), f'Shape: {out.shape}'\n"
+        },
+        {
+          "name": "Has router and experts",
+          "code": "\nimport torch, torch.nn as nn\nmoe = {fn}(d_model=32, d_ff=64, num_experts=4, top_k=2)\nassert hasattr(moe, 'router'), 'Need self.router'\nassert hasattr(moe, 'experts'), 'Need self.experts'\nassert len(moe.experts) == 4, f'Expected 4 experts, got {len(moe.experts)}'\n"
+        },
+        {
+          "name": "Router logits shape",
+          "code": "\nimport torch\nmoe = {fn}(d_model=16, d_ff=32, num_experts=8, top_k=2)\nlogits = moe.router(torch.randn(4, 16))\nassert logits.shape == (4, 8), f'Router output: {logits.shape}'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nmoe = {fn}(d_model=16, d_ff=32, num_experts=4, top_k=2)\nx = torch.randn(1, 4, 16, requires_grad=True)\nmoe(x).sum().backward()\nassert x.grad is not None, 'x.grad is None'\n"
+        }
+      ]
+    },
+    {
+      "id": "ppo_loss",
+      "title": "PPO (Proximal Policy Optimization) Clipped Loss",
+      "difficulty": "Hard",
+      "functionName": "ppo_loss",
+      "hint": "Compute ratio r = exp(new_logps - old_logps_detached). Form unclipped = r * adv_detached and clipped = clamp(r, 1-clip, 1+clip) * adv_detached. Return the negative mean of min(unclipped, clipped). Gradients should flow only through new_logps.",
+      "tests": [
+        {
+          "name": "Basic shape & type",
+          "code": "\nimport torch\nfrom torch import Tensor\nnew_logps = torch.randn(16, requires_grad=True)\nold_logps = torch.randn(16)\nadvantages = torch.randn(16)\nloss = {fn}(new_logps, old_logps, advantages)\nassert isinstance(loss, Tensor) and loss.dim() == 0, 'Loss must be scalar Tensor'\n"
+        },
+        {
+          "name": "Numeric check vs fixed value",
+          "code": "\nimport torch\nnew_logps = torch.tensor([0.0, -0.2, -0.4, -0.6])\nold_logps = torch.tensor([0.0, -0.1, -0.5, -0.5])\nadvantages = torch.tensor([1.0, -1.0, 0.5, -0.5])\nloss = {fn}(new_logps, old_logps, advantages, clip_ratio=0.2)\nexpected = torch.tensor(-0.0488)\nassert torch.allclose(loss, expected, atol=1e-4, rtol=0), 'Loss should match the expected numeric value on the fixed example'\n"
+        },
+        {
+          "name": "Gradient flows to new_logps only",
+          "code": "\nimport torch\nnew_logps = torch.randn(8, requires_grad=True)\nold_logps = torch.randn(8, requires_grad=True)\nadvantages = torch.randn(8, requires_grad=True)\nloss = {fn}(new_logps, old_logps, advantages)\nloss.backward()\nassert new_logps.grad is not None, 'Gradients should flow through new_logps'\nassert old_logps.grad is None, 'Gradients should not flow through old_logps (treat as constant baseline)'\nassert advantages.grad is None, 'Gradients should not flow through advantages (treat as constant advantages)'\n"
+        }
+      ]
+    },
+    {
+      "id": "rope",
+      "title": "Rotary Position Embedding (RoPE)",
+      "difficulty": "Hard",
+      "functionName": "apply_rope",
+      "hint": "Split into pairs (x_even, x_odd). Compute angles = pos * 1/(10000^(2i/d)). Rotate: [x_e*cos - x_o*sin, x_e*sin + x_o*cos]. Stack and flatten.",
+      "tests": [
+        {
+          "name": "Output shapes",
+          "code": "\nimport torch\nq = torch.randn(2, 8, 64)\nk = torch.randn(2, 8, 64)\nq_rot, k_rot = {fn}(q, k)\nassert q_rot.shape == q.shape, f'Q shape: {q_rot.shape}'\nassert k_rot.shape == k.shape, f'K shape: {k_rot.shape}'\n"
+        },
+        {
+          "name": "Preserves norm",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nq = torch.randn(1, 16, 32)\nk = torch.randn(1, 16, 32)\nq_rot, k_rot = {fn}(q, k)\nassert torch.allclose(q.norm(dim=-1), q_rot.norm(dim=-1), atol=1e-4), 'RoPE should preserve norms'\n"
+        },
+        {
+          "name": "Relative position property",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nq = torch.randn(1, 8, 16)\nk = torch.randn(1, 8, 16)\nq_rot, k_rot = {fn}(q, k)\nq2 = torch.cat([torch.zeros(1, 3, 16), q], dim=1)\nk2 = torch.cat([torch.zeros(1, 3, 16), k], dim=1)\nq2_rot, k2_rot = {fn}(q2, k2)\ndot1 = (q_rot[:, 0] * k_rot[:, 0]).sum(dim=-1)\ndot2 = (q2_rot[:, 3] * k2_rot[:, 3]).sum(dim=-1)\nassert torch.allclose(dot1, dot2, atol=1e-4), 'Dot product should depend on relative position only'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nq = torch.randn(1, 4, 8, requires_grad=True)\nk = torch.randn(1, 4, 8, requires_grad=True)\nqr, kr = {fn}(q, k)\n(qr.sum() + kr.sum()).backward()\nassert q.grad is not None and k.grad is not None, 'Missing gradients'\n"
+        }
+      ]
+    },
+    {
+      "id": "sliding_window",
+      "title": "Sliding Window Attention",
+      "difficulty": "Hard",
+      "functionName": "sliding_window_attention",
+      "hint": "Like softmax attention but position i only attends to positions j where |i-j| <= window_size. Mask the rest with -inf.",
+      "tests": [
+        {
+          "name": "Output shape",
+          "code": "\nimport torch\nout = {fn}(torch.randn(2, 8, 16), torch.randn(2, 8, 16), torch.randn(2, 8, 16), window_size=2)\nassert out.shape == (2, 8, 16), f'Shape mismatch: {out.shape}'\n"
+        },
+        {
+          "name": "window_size=0 \u2014 only sees itself",
+          "code": "\nimport torch\nQ = torch.randn(1, 4, 8)\nK = torch.randn(1, 4, 8)\nV = torch.randn(1, 4, 8)\nout = {fn}(Q, K, V, window_size=0)\nassert torch.allclose(out, V, atol=1e-5), 'window=0: each position should output V[i]'\n"
+        },
+        {
+          "name": "Large window equals full attention",
+          "code": "\nimport torch, math\ntorch.manual_seed(0)\nB, S, D = 2, 6, 8\nQ = torch.randn(B, S, D)\nK = torch.randn(B, S, D)\nV = torch.randn(B, S, D)\nout_win = {fn}(Q, K, V, window_size=S)\nd_k = K.size(-1)\nscores = torch.bmm(Q, K.transpose(1, 2)) / math.sqrt(d_k)\nref = torch.bmm(torch.softmax(scores, dim=-1), V)\nassert torch.allclose(out_win, ref, atol=1e-5), 'Large window should equal full attention'\n"
+        },
+        {
+          "name": "Distant tokens don't affect output",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nB, S, D = 1, 10, 8\nQ = torch.randn(B, S, D)\nK = torch.randn(B, S, D)\nV = torch.randn(B, S, D)\nout1 = {fn}(Q, K, V, window_size=1)\nK2, V2 = K.clone(), V.clone()\nK2[:, 5:] = torch.randn(B, 5, D)\nV2[:, 5:] = torch.randn(B, 5, D)\nout2 = {fn}(Q, K2, V2, window_size=1)\nassert torch.allclose(out1[:, 0], out2[:, 0], atol=1e-5), 'Distant tokens should not affect output'\n"
+        },
+        {
+          "name": "Gradient flow",
+          "code": "\nimport torch\nQ = torch.randn(2, 4, 8, requires_grad=True)\nK = torch.randn(2, 4, 8, requires_grad=True)\nV = torch.randn(2, 4, 8, requires_grad=True)\n{fn}(Q, K, V, window_size=1).sum().backward()\nassert Q.grad is not None, 'Q.grad is None'\n"
+        }
+      ]
+    },
+    {
+      "id": "speculative_decoding",
+      "title": "Speculative Decoding",
+      "difficulty": "Hard",
+      "functionName": "speculative_decode",
+      "hint": "For each draft token i: accept with prob min(1, p_target[i,token]/p_draft[i,token]). If rejected, sample from max(0, p_target - p_draft) normalized. Return list of accepted tokens (may include one resampled).",
+      "tests": [
+        {
+          "name": "Perfect draft: all accepted",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nprobs = torch.softmax(torch.randn(4, 10), dim=-1)\ntokens = torch.tensor([2, 5, 1, 8])\naccepted = {fn}(probs, probs, tokens)\nassert len(accepted) == 4, f'Perfect draft should accept all, got {len(accepted)}'\nfor i in range(4):\n    assert accepted[i] == tokens[i].item(), f'Token {i} mismatch'\n"
+        },
+        {
+          "name": "Output length bounded",
+          "code": "\nimport torch\ntorch.manual_seed(0)\nK = 5\ntarget = torch.softmax(torch.randn(K, 8), dim=-1)\ndraft = torch.softmax(torch.randn(K, 8), dim=-1)\ntokens = torch.randint(0, 8, (K,))\naccepted = {fn}(target, draft, tokens)\nassert 1 <= len(accepted) <= K, f'Length {len(accepted)} not in [1, {K}]'\n"
+        },
+        {
+          "name": "All tokens valid",
+          "code": "\nimport torch\nV = 8\nfor seed in range(20):\n    torch.manual_seed(seed)\n    target = torch.softmax(torch.randn(3, V), dim=-1)\n    draft = torch.softmax(torch.randn(3, V), dim=-1)\n    tokens = torch.randint(0, V, (3,))\n    for t in {fn}(target, draft, tokens):\n        assert 0 <= t < V, f'Token {t} out of range'\n"
+        }
+      ]
+    }
+  ]
+}
