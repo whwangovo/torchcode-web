@@ -1,69 +1,61 @@
-import { Code, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
-import { ProblemList } from '@/components/ProblemList';
-import problemsData from '@/lib/problems.json';
-import { Problem } from '@/lib/types';
+import { ArrowRight, Code, Zap, Trophy } from 'lucide-react';
+import { TopNav } from '@/components/layout/TopNav';
+import { Button } from '@/components/ui/Button';
 
 export const dynamic = 'force-dynamic';
 
-async function getProgress() {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/progress`, {
-      cache: 'no-store',
-    });
-    if (!res.ok) return {};
-    const data = await res.json();
-    return data.progress || {};
-  } catch {
-    return {};
-  }
+async function getStats() {
+  const res = await fetch('http://localhost:3000/api/problems', { cache: 'no-store' });
+  const data = await res.json();
+  const total = data.total;
+  const easy = data.problems.filter((p: any) => p.difficulty === 'Easy').length;
+  const medium = data.problems.filter((p: any) => p.difficulty === 'Medium').length;
+  const hard = data.problems.filter((p: any) => p.difficulty === 'Hard').length;
+  return { total, easy, medium, hard };
 }
 
-export default async function Home() {
-  const problems = problemsData.problems as Problem[];
-  const progress = await getProgress();
-
-  const solvedCount = Object.values(progress).filter((p: any) => p.status === 'solved').length;
+export default async function HomePage() {
+  const stats = await getStats();
 
   return (
-    <main className="container mx-auto p-0">
-      {/* Hero */}
-      <div className="flex flex-col items-center justify-center py-16 px-4 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex items-center gap-3 mb-3">
-          <Code className="w-10 h-10 text-blue-600" />
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">TorchCode</h1>
-        </div>
-        <p className="text-lg text-gray-600 dark:text-gray-400 mb-6 text-center max-w-md">
-          PyTorch coding challenges with automated grading
-        </p>
-        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
-          <CheckCircle className="w-4 h-4 text-green-600" />
-          <span>
-            <span className="font-semibold text-gray-900 dark:text-white">{solvedCount}</span>
-            <span className="mx-1">/</span>
-            <span>{problems.length}</span>
-            <span className="ml-1">problems solved</span>
-          </span>
-        </div>
-        <Link
-          href="/problems"
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
-          View Problems
-        </Link>
-      </div>
-
-      {/* Problem list */}
-      <div className="py-8 px-4">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">All Problems</h2>
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-            <div className="h-[600px]">
-              <ProblemList problems={problems} progress={progress} />
-            </div>
+    <div className="min-h-screen bg-surface">
+      <TopNav />
+      <main className="max-w-5xl mx-auto px-6">
+        {/* Hero */}
+        <section className="pt-24 pb-16 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-accent/5 text-accent text-xs font-medium mb-6">
+            <Zap className="w-3 h-3" />
+            {stats.total} PyTorch challenges
           </div>
-        </div>
-      </div>
-    </main>
+          <h1 className="text-5xl font-bold tracking-tight text-text-primary mb-4">
+            Master PyTorch,<br />one problem at a time.
+          </h1>
+          <p className="text-lg text-text-secondary max-w-xl mx-auto mb-8 leading-relaxed">
+            Implement core operations from scratch — softmax, attention, GPT blocks and more. Instant feedback, real tests.
+          </p>
+          <Link href="/problems">
+            <Button size="lg">
+              Start Practicing
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
+        </section>
+
+        {/* Stats */}
+        <section className="grid grid-cols-3 gap-4 pb-24">
+          {[
+            { label: 'Easy', count: stats.easy, color: 'text-easy', bg: 'bg-easy/5' },
+            { label: 'Medium', count: stats.medium, color: 'text-medium', bg: 'bg-medium/5' },
+            { label: 'Hard', count: stats.hard, color: 'text-hard', bg: 'bg-hard/5' },
+          ].map((s) => (
+            <div key={s.label} className={`${s.bg} rounded-2xl p-6 text-center`}>
+              <p className={`text-3xl font-bold tracking-tight ${s.color}`}>{s.count}</p>
+              <p className="text-sm text-text-secondary mt-1">{s.label}</p>
+            </div>
+          ))}
+        </section>
+      </main>
+    </div>
   );
 }
