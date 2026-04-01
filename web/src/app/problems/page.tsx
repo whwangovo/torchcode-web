@@ -1,37 +1,64 @@
-import { ProblemList } from '@/components/ProblemList';
-import { Navigation } from '@/components/Navigation';
-import problemsData from '@/lib/problems.json';
-import { Problem, ProgressMap } from '@/lib/types';
+'use client';
 
-export const dynamic = 'force-dynamic';
+import { useEffect, useState } from 'react';
+import { TopNav } from '@/components/layout/TopNav';
+import { ProblemFilters } from '@/components/problem/ProblemFilters';
+import { ProblemRow } from '@/components/problem/ProblemRow';
+import type { Problem, ProgressMap } from '@/lib/types';
 
-async function getProgress(): Promise<ProgressMap> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/progress`, { cache: 'no-store' });
-    if (!res.ok) return {};
-    const data = await res.json();
-    return data.progress || {};
-  } catch {
-    return {};
-  }
-}
+export default function ProblemsPage() {
+  const [problems, setProblems] = useState<Problem[]>([]);
+  const [progress, setProgress] = useState<ProgressMap>({});
+  const [search, setSearch] = useState('');
+  const [difficulty, setDifficulty] = useState('');
+  const [status, setStatus] = useState('');
 
-export default async function ProblemsPage() {
-  const problems = problemsData.problems as Problem[];
-  const progress = await getProgress();
+  useEffect(() => {
+    fetch('/api/problems')
+      .then((r) => r.json())
+      .then((d) => setProblems(d.problems));
+    fetch('/api/progress')
+      .then((r) => r.json())
+      .then((d) => setProgress(d.progress || {}));
+  }, []);
+
+  const solvedCount = Object.values(progress).filter((p) => p.status === 'solved').length;
+
+  const filtered = problems.filter((p) => {
+    if (search && !p.title.toLowerCase().includes(search.toLowerCase())) return false;
+    if (difficulty && p.difficulty !== difficulty) return false;
+    if (status) {
+      const ps = progress[p.id]?.status || 'todo';
+      if (ps !== status) return false;
+    }
+    return true;
+  });
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navigation progress={progress} totalProblems={problems.length} />
-      <main className="flex-1 container mx-auto py-6 px-4">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Problems</h1>
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden shadow-sm">
-            <div className="h-[calc(100vh-200px)] min-h-[400px]">
-              <ProblemList problems={problems} progress={progress} />
-            </div>
-          </div>
+    <div className="min-h-screen bg-surface">
+      <TopNav solvedCount={solvedCount} totalCount={problems.length} />
+      <main className="max-w-4xl mx-auto px-6 py-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-text-primary mb-6">Problems</h1>
+        <ProblemFilters
+          search={search}
+          onSearchChange={setSearch}
+          difficulty={difficulty}
+          onDifficultyChange={setDifficulty}
+          status={status}
+          onStatusChange={setStatus}
+        />
+        <div className="space-y-1">
+          {filtered.map((p, i) => (
+            <ProblemRow
+              key={p.id}
+              problem={p}
+              index={i}
+              progress={progress[p.id]}
+            />
+          ))}
+          {filtered.length === 0 && (
+            <p className="text-sm text-text-tertiary text-center py-12">No problems match your filters.</p>
+          )}
         </div>
       </main>
     </div>
