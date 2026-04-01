@@ -1,0 +1,64 @@
+'use client';
+
+import { useState } from 'react';
+import { Lightbulb, ChevronDown, ChevronRight } from 'lucide-react';
+import { DifficultyBadge } from '@/components/problem/DifficultyBadge';
+import { cn } from '@/lib/utils';
+import type { Problem } from '@/lib/types';
+
+interface DescriptionTabProps {
+  problem: Problem;
+  hasAttempted: boolean;
+}
+
+export function DescriptionTab({ problem, hasAttempted }: DescriptionTabProps) {
+  const [hintOpen, setHintOpen] = useState(false);
+
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <div className="flex items-center gap-3 mb-2">
+          <h1 className="text-xl font-semibold tracking-tight text-text-primary">
+            {problem.title}
+          </h1>
+          <DifficultyBadge difficulty={problem.difficulty} />
+        </div>
+        <p className="text-sm text-text-secondary">
+          Implement the <code className="px-1.5 py-0.5 rounded bg-surface-secondary text-accent text-xs font-mono">{problem.functionName}</code> function.
+        </p>
+      </div>
+
+      {/* Test examples */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-text-primary">Test Cases</h3>
+        {problem.tests.slice(0, 2).map((test, i) => (
+          <div key={i} className="p-3 rounded-lg bg-surface-secondary border border-border/50">
+            <p className="text-xs font-medium text-text-secondary mb-1">{test.name}</p>
+          </div>
+        ))}
+        {problem.tests.length > 2 && (
+          <p className="text-xs text-text-tertiary">+ {problem.tests.length - 2} more tests</p>
+        )}
+      </div>
+
+      {/* Hint */}
+      {hasAttempted && problem.hint && (
+        <div>
+          <button
+            onClick={() => setHintOpen(!hintOpen)}
+            className="flex items-center gap-2 text-sm text-text-secondary hover:text-accent transition-colors"
+          >
+            <Lightbulb className="w-4 h-4" />
+            <span>Hint</span>
+            {hintOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          </button>
+          {hintOpen && (
+            <p className="mt-2 p-3 rounded-lg bg-medium/5 text-sm text-text-secondary leading-relaxed">
+              {problem.hint}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
