@@ -7,6 +7,8 @@ interface ProblemStore {
   setSubmissionResult: (result: any | null) => void;
   isSubmitting: boolean;
   setIsSubmitting: (v: boolean) => void;
+  drawerOpen: boolean;
+  setDrawerOpen: (v: boolean) => void;
 }
 
 export const useProblemStore = create<ProblemStore>((set) => ({
@@ -16,4 +18,6 @@ export const useProblemStore = create<ProblemStore>((set) => ({
   setSubmissionResult: (result) => set({ submissionResult: result }),
   isSubmitting: false,
   setIsSubmitting: (v) => set({ isSubmitting: v }),
+  drawerOpen: false,
+  setDrawerOpen: (v) => set({ drawerOpen: v }),
 }));
