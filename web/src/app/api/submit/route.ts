@@ -22,6 +22,14 @@ export async function POST(request: Request) {
     body: JSON.stringify({ taskId, code }),
   });
 
+  if (!gradingResponse.ok) {
+    const errText = await gradingResponse.text();
+    return NextResponse.json(
+      { passed: 0, total: 0, allPassed: false, results: [], totalTimeMs: 0, error: errText },
+      { status: 502 }
+    );
+  }
+
   const result: SubmissionResult = await gradingResponse.json();
 
   // Update progress

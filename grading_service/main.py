@@ -45,7 +45,13 @@ class GradeResponse(BaseModel):
 
 
 def _execute_tests(code: str, task: dict, test_indices: list[int] | None = None) -> GradeResponse:
-    user_ns: dict[str, Any] = {"torch": __import__("torch")}
+    import torch
+    user_ns: dict[str, Any] = {
+        "torch": torch,
+        "nn": torch.nn,
+        "F": torch.nn.functional,
+        "np": __import__("numpy"),
+    }
     try:
         exec(code, user_ns)
     except SyntaxError as e:
