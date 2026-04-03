@@ -30,6 +30,7 @@ export default function WorkspacePage() {
   const [problem, setProblem] = useState<(Problem & { starterCode?: string }) | null>(null);
   const [allProblems, setAllProblems] = useState<Problem[]>([]);
   const [progress, setProgress] = useState<ProgressMap>({});
+  const [isRunning, setIsRunning] = useState(false);
 
   useEffect(() => {
     fetch(`/api/problems/${id}`)
@@ -46,6 +47,25 @@ export default function WorkspacePage() {
       .then((r) => r.json())
       .then((d) => setProgress(d.progress || {}));
   }, [id, setCurrentCode, setSubmissionResult]);
+
+  const handleRun = async () => {
+    if (!problem || isRunning) return;
+    setIsRunning(true);
+    setSubmissionResult(null);
+    try {
+      const res = await fetch('/api/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId: problem.id, code: currentCode }),
+      });
+      const result: SubmissionResult = await res.json();
+      setSubmissionResult(result);
+    } catch {
+      setSubmissionResult({ passed: 0, total: 0, allPassed: false, results: [], totalTimeMs: 0, error: 'Network error' });
+    } finally {
+      setIsRunning(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!problem || isSubmitting) return;
@@ -89,7 +109,7 @@ export default function WorkspacePage() {
         >
           <Menu className="w-4 h-4 text-text-secondary" />
         </button>
-        <span className="text-sm font-medium text-text-primary truncate">{problem.title}</span>
+        <span className="text-sm font-medium text-text-primary truncate">{tProblem(problem.id)}</span>
       </div>
       <Tabs.Root defaultValue="description" className="flex-1 flex flex-col overflow-hidden">
         <Tabs.List className="flex border-b border-border px-4">
@@ -122,7 +142,7 @@ export default function WorkspacePage() {
         <CodeEditor value={currentCode} onChange={setCurrentCode} />
       </div>
       <TestResults result={submissionResult} />
-      <ActionBar onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+      <ActionBar onSubmit={handleSubmit} onRun={handleRun} isSubmitting={isSubmitting} isRunning={isRunning} />
     </div>
   );
 

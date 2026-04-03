@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import { StatusIcon } from './StatusIcon';
 import { DifficultyBadge } from './DifficultyBadge';
+import { useLocale } from '@/context/LocaleContext';
 import type { Problem, ProblemProgress } from '@/lib/types';
 
 interface ProblemRowProps {
@@ -11,6 +14,7 @@ interface ProblemRowProps {
 
 export function ProblemRow({ problem, index, progress }: ProblemRowProps) {
   const status = progress?.status || 'todo';
+  const { t, tProblem } = useLocale();
 
   return (
     <Link
@@ -20,7 +24,7 @@ export function ProblemRow({ problem, index, progress }: ProblemRowProps) {
       <StatusIcon status={status} />
       <span className="text-sm text-text-tertiary w-8">{index + 1}</span>
       <span className="flex-1 text-sm text-text-primary group-hover:text-accent transition-colors">
-        {problem.title}
+        {tProblem(problem.id)}
       </span>
       <DifficultyBadge difficulty={problem.difficulty} />
     </Link>
