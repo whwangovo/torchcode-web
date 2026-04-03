@@ -107,6 +107,22 @@ def run(request: RunRequest) -> GradeResponse:
     return _execute_tests(request.code, task, request.testIndices)
 
 
+@app.get("/tasks/{task_id}/notebook")
+def get_notebook(task_id: str) -> dict:
+    import json as _json
+    solutions_dir = Path(__file__).parent.parent / "solutions"
+    matches = list(solutions_dir.glob(f"*_{task_id}_solution.ipynb"))
+    if not matches:
+        raise HTTPException(status_code=404, detail=f"Notebook for '{task_id}' not found")
+    nb = _json.loads(matches[0].read_text())
+    cells = [
+        {"type": c["cell_type"], "source": "".join(c["source"])}
+        for c in nb.get("cells", [])
+        if "".join(c["source"]).strip()
+    ]
+    return {"cells": cells}
+
+
 @app.get("/tasks/{task_id}/solution")
 def get_solution(task_id: str) -> dict[str, str]:
     task = get_task(task_id)

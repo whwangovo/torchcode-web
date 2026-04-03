@@ -8,14 +8,11 @@ export async function GET(
 ) {
   const { id } = await params;
   try {
-    const res = await fetch(`${GRADING_URL}/tasks/${id}/solution`);
+    const res = await fetch(`${GRADING_URL}/tasks/${id}/notebook`);
     if (!res.ok) {
       return NextResponse.json({ error: 'Solution not found' }, { status: 404 });
     }
-    const { solution } = await res.json();
-    return NextResponse.json({
-      cells: [{ type: 'code', source: solution }],
-    });
+    return NextResponse.json(await res.json());
   } catch {
     return NextResponse.json({ error: 'Solution not found' }, { status: 404 });
   }
