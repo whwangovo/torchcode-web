@@ -20,6 +20,8 @@ import type { Problem, ProgressMap, SubmissionResult } from '@/lib/types';
 export default function WorkspacePage() {
   const { id } = useParams<{ id: string }>();
   const { t, tProblem } = useLocale();
+  const {
+    currentCode, setCurrentCode,
     submissionResult, setSubmissionResult,
     isSubmitting, setIsSubmitting,
     drawerOpen, setDrawerOpen,
