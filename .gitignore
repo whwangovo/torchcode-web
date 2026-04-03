@@ -25,6 +25,7 @@ web/data/
 
 # Docs
 docs/
+node_modules/
 web/node_modules/
 
 # Next.js build output

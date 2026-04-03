@@ -45,12 +45,14 @@ class GradeResponse(BaseModel):
 
 
 def _execute_tests(code: str, task: dict, test_indices: list[int] | None = None) -> GradeResponse:
-    import torch
+    import torch, math
     user_ns: dict[str, Any] = {
         "torch": torch,
+        "Tensor": torch.Tensor,
         "nn": torch.nn,
         "F": torch.nn.functional,
         "np": __import__("numpy"),
+        "math": math,
     }
     try:
         exec(code, user_ns)
@@ -72,7 +74,16 @@ def _execute_tests(code: str, task: dict, test_indices: list[int] | None = None)
     total_time_ms = 0.0
 
     for test in tests:
-        test_ns: dict[str, Any] = {"torch": __import__("torch"), fn_name: user_ns[fn_name]}
+        _torch = __import__("torch")
+        test_ns: dict[str, Any] = {
+            "torch": _torch,
+            "Tensor": _torch.Tensor,
+            "nn": _torch.nn,
+            "F": _torch.nn.functional,
+            "np": __import__("numpy"),
+            "math": math,
+            fn_name: user_ns[fn_name],
+        }
         test_code = test["code"].replace("{fn}", fn_name)
         start = time.perf_counter()
         try:
@@ -116,12 +127,18 @@ def get_notebook(task_id: str) -> dict:
         raise HTTPException(status_code=404, detail=f"Notebook for '{task_id}' not found")
     nb = _json.loads(matches[0].read_text())
     _skip = ("google.colab", "torch_judge", "get_ipython", "colab.research.google.com")
-    cells = [
-        {"type": c["cell_type"], "source": "".join(c["source"])}
-        for c in nb.get("cells", [])
-        if "".join(c["source"]).strip()
-        and not any(s in "".join(c["source"]) for s in _skip)
-    ]
+    def _strip_imports(src: str) -> str:
+        lines = [l for l in src.splitlines() if not l.startswith("import ") and not l.startswith("from ")]
+        return "\n".join(lines).strip()
+    cells = []
+    for c in nb.get("cells", []):
+        src = "".join(c["source"])
+        if not src.strip() or any(s in src for s in _skip):
+            continue
+        if c["cell_type"] == "code":
+            src = _strip_imports(src)
+        if src.strip():
+            cells.append({"type": c["cell_type"], "source": src})
     return {"cells": cells}
 
 

@@ -36,7 +36,7 @@ export function DescriptionTab({ problem, hasAttempted }: DescriptionTabProps) {
           <div key={i} className="rounded-lg bg-surface-secondary border border-border/50 overflow-hidden">
             <p className="text-xs font-medium text-text-secondary px-3 pt-2 pb-1">{test.name}</p>
             <pre className="text-xs font-mono px-3 pb-3 overflow-x-auto leading-relaxed">
-              <PythonCode code={test.code.replace(/\{fn\}/g, problem.functionName).trim()} />
+              <PythonCode code={test.code.replace(/\{fn\}/g, problem.functionName).split('\n').filter(l => !l.startsWith('import ') && !l.startsWith('from ')).join('\n').trim()} />
             </pre>
           </div>
         ))}
