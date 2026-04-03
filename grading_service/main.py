@@ -22,6 +22,12 @@ class SubmitRequest(BaseModel):
     code: str
 
 
+class RunRequest(BaseModel):
+    taskId: str
+    code: str
+    testIndices: list[int] | None = None
+
+
 class TestResult(BaseModel):
     name: str
     passed: bool
@@ -38,54 +44,28 @@ class GradeResponse(BaseModel):
     error: str | None = None
 
 
-@app.post("/grade", response_model=GradeResponse)
-def grade(request: SubmitRequest) -> GradeResponse:
-    task = get_task(request.taskId)
-    if task is None:
-        raise HTTPException(status_code=404, detail=f"Task '{request.taskId}' not found")
+def _execute_tests(code: str, task: dict, test_indices: list[int] | None = None) -> GradeResponse:
+    user_ns: dict[str, Any] = {"torch": __import__("torch")}
+    try:
+        exec(code, user_ns)
+    except SyntaxError as e:
+        return GradeResponse(passed=0, total=0, allPassed=False, results=[], totalTimeMs=0.0, error=f"Syntax error: {e}")
+
+    fn_name = task.get("function_name")
+    if fn_name is None:
+        return GradeResponse(passed=0, total=0, allPassed=False, results=[], totalTimeMs=0.0, error="Task has no function_name defined")
+
+    if fn_name not in user_ns:
+        return GradeResponse(passed=0, total=0, allPassed=False, results=[], totalTimeMs=0.0, error=f"Function '{fn_name}' not found in submitted code")
+
+    all_tests = task.get("tests", [])
+    tests = [all_tests[i] for i in test_indices if i < len(all_tests)] if test_indices is not None else all_tests
 
     results: list[TestResult] = []
     passed = 0
     total_time_ms = 0.0
-    error: str | None = None
 
-    # Execute user code to get the function
-    user_ns: dict[str, Any] = {"torch": __import__("torch")}
-    try:
-        exec(request.code, user_ns)
-    except SyntaxError as e:
-        return GradeResponse(
-            passed=0,
-            total=0,
-            allPassed=False,
-            results=[],
-            totalTimeMs=0.0,
-            error=f"Syntax error: {e}",
-        )
-
-    fn_name = task.get("function_name")
-    if fn_name is None:
-        return GradeResponse(
-            passed=0,
-            total=0,
-            allPassed=False,
-            results=[],
-            totalTimeMs=0.0,
-            error="Task has no function_name defined",
-        )
-
-    if fn_name not in user_ns:
-        return GradeResponse(
-            passed=0,
-            total=0,
-            allPassed=False,
-            results=[],
-            totalTimeMs=0.0,
-            error=f"Function '{fn_name}' not found in submitted code",
-        )
-
-    # Run each test
-    for test in task.get("tests", []):
+    for test in tests:
         test_ns: dict[str, Any] = {"torch": __import__("torch"), fn_name: user_ns[fn_name]}
         test_code = test["code"].replace("{fn}", fn_name)
         start = time.perf_counter()
@@ -96,34 +76,29 @@ def grade(request: SubmitRequest) -> GradeResponse:
             passed += 1
         except AssertionError as e:
             exec_time_ms = (time.perf_counter() - start) * 1000
-            results.append(
-                TestResult(
-                    name=test["name"],
-                    passed=False,
-                    execTimeMs=exec_time_ms,
-                    error=str(e),
-                )
-            )
+            results.append(TestResult(name=test["name"], passed=False, execTimeMs=exec_time_ms, error=str(e)))
         except Exception as e:
             exec_time_ms = (time.perf_counter() - start) * 1000
-            results.append(
-                TestResult(
-                    name=test["name"],
-                    passed=False,
-                    execTimeMs=exec_time_ms,
-                    error=f"{type(e).__name__}: {e}",
-                )
-            )
+            results.append(TestResult(name=test["name"], passed=False, execTimeMs=exec_time_ms, error=f"{type(e).__name__}: {e}"))
         total_time_ms += exec_time_ms
 
-    return GradeResponse(
-        passed=passed,
-        total=len(results),
-        allPassed=passed == len(results),
-        results=results,
-        totalTimeMs=total_time_ms,
-        error=error,
-    )
+    return GradeResponse(passed=passed, total=len(results), allPassed=passed == len(results), results=results, totalTimeMs=total_time_ms)
+
+
+@app.post("/grade", response_model=GradeResponse)
+def grade(request: SubmitRequest) -> GradeResponse:
+    task = get_task(request.taskId)
+    if task is None:
+        raise HTTPException(status_code=404, detail=f"Task '{request.taskId}' not found")
+    return _execute_tests(request.code, task)
+
+
+@app.post("/run", response_model=GradeResponse)
+def run(request: RunRequest) -> GradeResponse:
+    task = get_task(request.taskId)
+    if task is None:
+        raise HTTPException(status_code=404, detail=f"Task '{request.taskId}' not found")
+    return _execute_tests(request.code, task, request.testIndices)
 
 
 @app.get("/tasks/{task_id}/solution")
