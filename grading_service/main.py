@@ -115,10 +115,12 @@ def get_notebook(task_id: str) -> dict:
     if not matches:
         raise HTTPException(status_code=404, detail=f"Notebook for '{task_id}' not found")
     nb = _json.loads(matches[0].read_text())
+    _skip = ("google.colab", "torch_judge", "get_ipython", "colab.research.google.com")
     cells = [
         {"type": c["cell_type"], "source": "".join(c["source"])}
         for c in nb.get("cells", [])
         if "".join(c["source"]).strip()
+        and not any(s in "".join(c["source"]) for s in _skip)
     ]
     return {"cells": cells}
 
