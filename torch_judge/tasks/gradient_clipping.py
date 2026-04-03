@@ -22,13 +22,13 @@ TASK = {
             "name": "Preserves direction",
             "code": "\nimport torch\ntorch.manual_seed(0)\np = torch.randn(100, requires_grad=True)\n(p * 10).sum().backward()\ndir_before = p.grad / p.grad.norm()\n{fn}([p], max_norm=1.0)\ndir_after = p.grad / p.grad.norm()\nassert torch.allclose(dir_before, dir_after, atol=1e-5), 'Should preserve direction'\n"
         }
-    ]
-    "solution": "def clip_grad_norm(parameters, max_norm):
+    ],
+    "solution": '''def clip_grad_norm(parameters, max_norm):
     parameters = [p for p in parameters if p.grad is not None]
     total_norm = torch.sqrt(sum(p.grad.norm() ** 2 for p in parameters))
     clip_coef = max_norm / (total_norm + 1e-6)
     if clip_coef < 1:
         for p in parameters:
             p.grad.mul_(clip_coef)
-    return total_norm.item()",
+    return total_norm.item()''',
 }

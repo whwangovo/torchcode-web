@@ -22,8 +22,8 @@ TASK = {
             "name": "Gradient flow",
             "code": "\nimport torch\nattn = {fn}(d_model=32, num_heads=2)\nx_q = torch.randn(1, 4, 32, requires_grad=True)\nx_kv = torch.randn(1, 6, 32, requires_grad=True)\nattn(x_q, x_kv).sum().backward()\nassert x_q.grad is not None and x_kv.grad is not None, 'Missing gradients'\n"
         }
-    ]
-    "solution": "class MultiHeadCrossAttention(nn.Module):
+    ],
+    "solution": '''class MultiHeadCrossAttention(nn.Module):
     def __init__(self, d_model, num_heads):
         super().__init__()
         self.num_heads = num_heads
@@ -42,5 +42,5 @@ TASK = {
         scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.d_k)
         weights = torch.softmax(scores, dim=-1)
         attn = torch.matmul(weights, v)
-        return self.W_o(attn.transpose(1, 2).contiguous().view(B, S_q, -1))",
+        return self.W_o(attn.transpose(1, 2).contiguous().view(B, S_q, -1))''',
 }

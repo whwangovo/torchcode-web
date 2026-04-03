@@ -22,8 +22,8 @@ TASK = {
             "name": "Returns valid index",
             "code": "\nimport torch\ntorch.manual_seed(0)\nV = 100\nlogits = torch.randn(V)\nfor _ in range(20):\n    t = {fn}(logits.clone(), top_k=10, top_p=0.9)\n    assert 0 <= t < V, f'Token {t} out of range'\n"
         }
-    ]
-    "solution": "def sample_top_k_top_p(logits, top_k=0, top_p=1.0, temperature=1.0):
+    ],
+    "solution": '''def sample_top_k_top_p(logits, top_k=0, top_p=1.0, temperature=1.0):
     logits = logits / max(temperature, 1e-8)
     if top_k > 0:
         top_k_val = logits.topk(top_k).values[-1]
@@ -36,5 +36,5 @@ TASK = {
         sorted_logits[mask] = float('-inf')
         logits = torch.empty_like(logits).scatter_(0, sorted_idx, sorted_logits)
     probs = torch.softmax(logits, dim=-1)
-    return torch.multinomial(probs, 1).item()",
+    return torch.multinomial(probs, 1).item()''',
 }

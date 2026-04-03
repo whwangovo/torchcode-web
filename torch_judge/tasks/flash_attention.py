@@ -22,8 +22,8 @@ TASK = {
             "name": "Gradient flow",
             "code": "\nimport torch\nQ = torch.randn(1, 8, 4, requires_grad=True)\nK = torch.randn(1, 8, 4, requires_grad=True)\nV = torch.randn(1, 8, 4, requires_grad=True)\n{fn}(Q, K, V, block_size=4).sum().backward()\nassert Q.grad is not None, 'Q.grad is None'\n"
         }
-    ]
-    "solution": "def flash_attention(Q, K, V, block_size=32):
+    ],
+    "solution": '''def flash_attention(Q, K, V, block_size=32):
     B, S, D = Q.shape
     output = torch.zeros_like(Q)
     for i in range(0, S, block_size):
@@ -44,5 +44,5 @@ TASK = {
             row_sum = row_sum * correction + exp_scores.sum(dim=-1, keepdim=True)
             row_max = new_max
         output[:, i:i+block_size] = acc / row_sum
-    return output",
+    return output''',
 }

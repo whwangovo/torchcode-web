@@ -67,7 +67,7 @@ assert n_grad == n_total, f'Only {n_grad}/{n_total} params got gradients'
 """,
         },
     ],
-    "solution": "class GPT2Block(nn.Module):
+    "solution": '''class GPT2Block(nn.Module):
     def __init__(self, d_model, num_heads):
         super().__init__()
         self.num_heads = num_heads
@@ -102,5 +102,5 @@ assert n_grad == n_total, f'Only {n_grad}/{n_total} params got gradients'
     def forward(self, x):
         x = x + self._attn(self.ln1(x))
         x = x + self.mlp(self.ln2(x))
-        return x",
+        return x''',
 }

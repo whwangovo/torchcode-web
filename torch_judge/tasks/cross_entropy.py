@@ -22,8 +22,8 @@ TASK = {
             "name": "Gradient flow",
             "code": "\nimport torch\nlogits = torch.randn(8, 5, requires_grad=True)\ntargets = torch.randint(0, 5, (8,))\n{fn}(logits, targets).backward()\nassert logits.grad is not None, 'logits.grad is None'\n"
         }
-    ]
-    "solution": "def cross_entropy_loss(logits, targets):
+    ],
+    "solution": '''def cross_entropy_loss(logits, targets):
     log_probs = logits - torch.logsumexp(logits, dim=-1, keepdim=True)
-    return -log_probs[torch.arange(targets.shape[0]), targets].mean()",
+    return -log_probs[torch.arange(targets.shape[0]), targets].mean()''',
 }

@@ -22,8 +22,8 @@ TASK = {
             "name": "Gradient flow",
             "code": "\nimport torch\nmoe = {fn}(d_model=16, d_ff=32, num_experts=4, top_k=2)\nx = torch.randn(1, 4, 16, requires_grad=True)\nmoe(x).sum().backward()\nassert x.grad is not None, 'x.grad is None'\n"
         }
-    ]
-    "solution": "class MixtureOfExperts(nn.Module):
+    ],
+    "solution": '''class MixtureOfExperts(nn.Module):
     def __init__(self, d_model, d_ff, num_experts, top_k=2):
         super().__init__()
         self.top_k = top_k
@@ -49,5 +49,5 @@ TASK = {
                 mask = (top_idx[:, k] == e)
                 if mask.any():
                     output[mask] += weights[mask, k:k+1] * self.experts[e](x_flat[mask])
-        return output.reshape(orig_shape)",
+        return output.reshape(orig_shape)''',
 }

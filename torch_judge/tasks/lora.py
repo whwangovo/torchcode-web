@@ -26,8 +26,8 @@ TASK = {
             "name": "Forward computation",
             "code": "\nimport torch\ntorch.manual_seed(0)\nlayer = {fn}(in_features=8, out_features=4, rank=2, alpha=2.0)\nlayer.lora_B.data.normal_()\nx = torch.randn(3, 8)\nref = layer.linear(x) + (x @ layer.lora_A.T @ layer.lora_B.T) * (2.0 / 2)\nassert torch.allclose(layer(x), ref, atol=1e-5), 'Forward mismatch'\n"
         }
-    ]
-    "solution": "class LoRALinear(nn.Module):
+    ],
+    "solution": '''class LoRALinear(nn.Module):
     def __init__(self, in_features, out_features, rank, alpha=1.0):
         super().__init__()
         self.linear = nn.Linear(in_features, out_features)
@@ -38,5 +38,5 @@ TASK = {
         self.scaling = alpha / rank
 
     def forward(self, x):
-        return self.linear(x) + (x @ self.lora_A.T @ self.lora_B.T) * self.scaling",
+        return self.linear(x) + (x @ self.lora_A.T @ self.lora_B.T) * self.scaling''',
 }

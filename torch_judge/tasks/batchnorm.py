@@ -86,7 +86,7 @@ assert beta.grad is not None, 'beta.grad is None'
 """,
         },
     ],
-    "solution": "import torch
+    "solution": '''import torch
 
 def my_batch_norm(
     x,
@@ -98,11 +98,11 @@ def my_batch_norm(
     momentum=0.1,
     training=True,
 ):
-    \"\"\"BatchNorm with train/eval behavior and running stats.
+    """BatchNorm with train/eval behavior and running stats.
 
     - Training: use batch stats, update running_mean / running_var in-place.
     - Inference: use running_mean / running_var as-is.
-    \"\"\"
+    """
     if training:
         batch_mean = x.mean(dim=0)
         batch_var = x.var(dim=0, unbiased=False)
@@ -118,5 +118,5 @@ def my_batch_norm(
         var = running_var
 
     x_norm = (x - mean) / torch.sqrt(var + eps)
-    return gamma * x_norm + beta",
+    return gamma * x_norm + beta''',
 }

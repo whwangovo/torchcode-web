@@ -18,8 +18,8 @@ TASK = {
             "name": "All tokens valid",
             "code": "\nimport torch\nV = 8\nfor seed in range(20):\n    torch.manual_seed(seed)\n    target = torch.softmax(torch.randn(3, V), dim=-1)\n    draft = torch.softmax(torch.randn(3, V), dim=-1)\n    tokens = torch.randint(0, V, (3,))\n    for t in {fn}(target, draft, tokens):\n        assert 0 <= t < V, f'Token {t} out of range'\n"
         }
-    ]
-    "solution": "def speculative_decode(target_probs, draft_probs, draft_tokens):
+    ],
+    "solution": '''def speculative_decode(target_probs, draft_probs, draft_tokens):
     K = len(draft_tokens)
     accepted = []
     for i in range(K):
@@ -36,5 +36,5 @@ TASK = {
                 adjusted = torch.ones_like(adjusted) / adjusted.shape[0]
             accepted.append(torch.multinomial(adjusted, 1).item())
             return accepted
-    return accepted",
+    return accepted''',
 }

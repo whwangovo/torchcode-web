@@ -79,7 +79,7 @@ assert n_grad == n_total, f'Only {n_grad}/{n_total} params got gradients'
 """,
         },
     ],
-    "solution": "class KVCacheAttention(nn.Module):
+    "solution": '''class KVCacheAttention(nn.Module):
     def __init__(self, d_model, num_heads):
         super().__init__()
         self.num_heads = num_heads
@@ -118,5 +118,5 @@ assert n_grad == n_total, f'Only {n_grad}/{n_total} params got gradients'
         weights = torch.softmax(scores, dim=-1)
         attn = torch.matmul(weights, v)
         out = self.W_o(attn.transpose(1, 2).contiguous().view(B, S_new, -1))
-        return out, new_cache",
+        return out, new_cache''',
 }

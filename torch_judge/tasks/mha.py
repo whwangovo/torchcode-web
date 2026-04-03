@@ -95,7 +95,7 @@ assert not torch.allclose(q[:, 0], q[:, 1], atol=1e-3), 'Heads produce identical
 """,
         },
     ],
-    "solution": "class MultiHeadAttention:
+    "solution": '''class MultiHeadAttention:
     def __init__(self, d_model: int, num_heads: int):
         self.num_heads = num_heads
         self.d_k = d_model // num_heads
@@ -118,5 +118,5 @@ assert not torch.allclose(q[:, 0], q[:, 1], atol=1e-3), 'Heads produce identical
         attn = torch.matmul(weights, v)
 
         out = attn.transpose(1, 2).contiguous().view(B, S_q, -1)
-        return self.W_o(out)",
+        return self.W_o(out)''',
 }

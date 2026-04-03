@@ -42,12 +42,12 @@ assert layer.bias.grad is not None, 'bias.grad is None'
 """,
         },
     ],
-    "solution": "class SimpleLinear:
+    "solution": '''class SimpleLinear:
     def __init__(self, in_features: int, out_features: int):
         self.weight = torch.randn(out_features, in_features) * (1 / math.sqrt(in_features))
         self.weight.requires_grad_(True)
         self.bias = torch.zeros(out_features, requires_grad=True)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return x @ self.weight.T + self.bias",
+        return x @ self.weight.T + self.bias''',
 }

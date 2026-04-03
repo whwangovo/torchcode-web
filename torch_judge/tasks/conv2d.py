@@ -26,8 +26,8 @@ TASK = {
             "name": "Gradient flow",
             "code": "\nimport torch\nx = torch.randn(1, 1, 4, 4, requires_grad=True)\nw = torch.randn(2, 1, 3, 3, requires_grad=True)\n{fn}(x, w).sum().backward()\nassert x.grad is not None and w.grad is not None, 'Missing gradients'\n"
         }
-    ]
-    "solution": "def my_conv2d(x, weight, bias=None, stride=1, padding=0):
+    ],
+    "solution": '''def my_conv2d(x, weight, bias=None, stride=1, padding=0):
     if padding > 0:
         x = F.pad(x, [padding] * 4)
     B, C_in, H, W = x.shape
@@ -38,5 +38,5 @@ TASK = {
     out = torch.einsum('bihwjk,oijk->bohw', patches, weight)
     if bias is not None:
         out = out + bias.view(1, -1, 1, 1)
-    return out",
+    return out''',
 }

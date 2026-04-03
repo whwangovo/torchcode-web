@@ -22,8 +22,8 @@ TASK = {
             "name": "Gradient flow",
             "code": "\nimport torch\npe = {fn}(img_size=32, patch_size=8, in_channels=3, embed_dim=64)\nx = torch.randn(1, 3, 32, 32, requires_grad=True)\npe(x).sum().backward()\nassert x.grad is not None, 'x.grad is None'\n"
         }
-    ]
-    "solution": "class PatchEmbedding(nn.Module):
+    ],
+    "solution": '''class PatchEmbedding(nn.Module):
     def __init__(self, img_size, patch_size, in_channels, embed_dim):
         super().__init__()
         self.patch_size = patch_size
@@ -36,5 +36,5 @@ TASK = {
         n_h, n_w = H // p, W // p
         x = x.reshape(B, C, n_h, p, n_w, p)
         x = x.permute(0, 2, 4, 1, 3, 5).reshape(B, n_h * n_w, C * p * p)
-        return self.proj(x)",
+        return self.proj(x)''',
 }

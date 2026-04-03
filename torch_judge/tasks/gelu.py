@@ -22,7 +22,7 @@ TASK = {
             "name": "Gradient flow",
             "code": "\nimport torch\nx = torch.randn(4, 8, requires_grad=True)\n{fn}(x).sum().backward()\nassert x.grad is not None and x.grad.shape == x.shape, 'Gradient issue'\n"
         }
-    ]
-    "solution": "def my_gelu(x):
-    return 0.5 * x * (1.0 + torch.erf(x / math.sqrt(2.0)))",
+    ],
+    "solution": '''def my_gelu(x):
+    return 0.5 * x * (1.0 + torch.erf(x / math.sqrt(2.0)))''',
 }

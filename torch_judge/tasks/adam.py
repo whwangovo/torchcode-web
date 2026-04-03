@@ -18,8 +18,8 @@ TASK = {
             "name": "zero_grad works",
             "code": "\nimport torch\nw = torch.randn(4, requires_grad=True)\nopt = {fn}([w], lr=0.01)\n(w ** 2).sum().backward()\nassert w.grad.abs().sum() > 0\nopt.zero_grad()\nassert w.grad.abs().sum() == 0, 'zero_grad should zero all gradients'\n"
         }
-    ]
-    "solution": "class MyAdam:
+    ],
+    "solution": '''class MyAdam:
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8):
         self.params = list(params)
         self.lr = lr
@@ -44,5 +44,5 @@ TASK = {
     def zero_grad(self):
         for p in self.params:
             if p.grad is not None:
-                p.grad.zero_()",
+                p.grad.zero_()''',
 }

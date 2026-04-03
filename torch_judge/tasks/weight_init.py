@@ -22,11 +22,11 @@ TASK = {
             "name": "Smaller fan_in gives larger std",
             "code": "\nimport torch\nw1 = torch.empty(64, 16)\nw2 = torch.empty(64, 256)\n{fn}(w1)\n{fn}(w2)\nassert w1.std().item() > w2.std().item(), 'Smaller fan_in should give larger std'\n"
         }
-    ]
-    "solution": "def kaiming_init(weight):
+    ],
+    "solution": '''def kaiming_init(weight):
     fan_in = weight.shape[1] if weight.dim() >= 2 else weight.shape[0]
     std = math.sqrt(2.0 / fan_in)
     with torch.no_grad():
         weight.normal_(0, std)
-    return weight",
+    return weight''',
 }

@@ -26,10 +26,10 @@ TASK = {
             "name": "Beta scaling",
             "code": "\nimport torch\ntorch.manual_seed(0)\nc, r, rc, rr = torch.randn(4), torch.randn(4), torch.randn(4), torch.randn(4)\nl1 = {fn}(c, r, rc, rr, beta=0.1)\nl2 = {fn}(c, r, rc, rr, beta=1.0)\nassert not torch.allclose(l1, l2), 'Different beta should give different loss'\n"
         }
-    ]
-    "solution": "def dpo_loss(policy_chosen_logps, policy_rejected_logps,
+    ],
+    "solution": '''def dpo_loss(policy_chosen_logps, policy_rejected_logps,
              ref_chosen_logps, ref_rejected_logps, beta=0.1):
     chosen_rewards = beta * (policy_chosen_logps - ref_chosen_logps)
     rejected_rewards = beta * (policy_rejected_logps - ref_rejected_logps)
-    return -F.logsigmoid(chosen_rewards - rejected_rewards).mean()",
+    return -F.logsigmoid(chosen_rewards - rejected_rewards).mean()''',
 }

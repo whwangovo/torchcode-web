@@ -67,7 +67,7 @@ assert gqa.W_q.weight.grad is not None and gqa.W_k.weight.grad is not None, 'Mis
 """,
         },
     ],
-    "solution": "class GroupQueryAttention:
+    "solution": '''class GroupQueryAttention:
     def __init__(self, d_model, num_heads, num_kv_heads):
         self.num_heads = num_heads
         self.num_kv_heads = num_kv_heads
@@ -89,5 +89,5 @@ assert gqa.W_q.weight.grad is not None and gqa.W_k.weight.grad is not None, 'Mis
         weights = torch.softmax(scores, dim=-1)
         attn = torch.matmul(weights, v)
         out = attn.transpose(1, 2).contiguous().view(B, S, -1)
-        return self.W_o(out)",
+        return self.W_o(out)''',
 }

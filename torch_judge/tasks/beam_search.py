@@ -22,8 +22,8 @@ TASK = {
             "name": "Stops at eos",
             "code": "\nimport torch\ndef eos_fn(tokens):\n    lp = torch.zeros(4); lp[3] = 10.0; return lp\nseq = {fn}(eos_fn, start_token=0, max_len=100, beam_width=2, eos_token=3)\nassert seq[-1] == 3 and len(seq) == 2, f'Should be [0,3], got {seq}'\n"
         }
-    ]
-    "solution": "def beam_search(log_prob_fn, start_token, max_len, beam_width, eos_token):
+    ],
+    "solution": '''def beam_search(log_prob_fn, start_token, max_len, beam_width, eos_token):
     beams = [(0.0, [start_token])]
     completed = []
     for _ in range(max_len):
@@ -42,5 +42,5 @@ TASK = {
         beams = candidates[:beam_width]
     all_seqs = completed + beams
     all_seqs.sort(key=lambda x: x[0], reverse=True)
-    return all_seqs[0][1]",
+    return all_seqs[0][1]''',
 }

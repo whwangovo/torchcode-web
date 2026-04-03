@@ -57,7 +57,7 @@ assert weight.grad is not None, 'weight.grad is None'
 """,
         },
     ],
-    "solution": "def rms_norm(x, weight, eps=1e-6):
+    "solution": '''def rms_norm(x, weight, eps=1e-6):
     rms = torch.sqrt(x.pow(2).mean(dim=-1, keepdim=True) + eps)
-    return x / rms * weight",
+    return x / rms * weight''',
 }

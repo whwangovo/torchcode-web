@@ -22,8 +22,8 @@ TASK = {
             "name": "More merges -> fewer tokens",
             "code": "\nbpe1 = {fn}()\nbpe1.train(['hello'] * 10, num_merges=2)\nbpe2 = {fn}()\nbpe2.train(['hello'] * 10, num_merges=10)\nassert len(bpe2.encode('hello')) <= len(bpe1.encode('hello')), 'More merges should reduce tokens'\n"
         }
-    ]
-    "solution": "class SimpleBPE:
+    ],
+    "solution": '''class SimpleBPE:
     def __init__(self):
         self.merges = []
 
@@ -69,5 +69,5 @@ TASK = {
                     else:
                         i += 1
             all_tokens.extend(symbols)
-        return all_tokens",
+        return all_tokens''',
 }
