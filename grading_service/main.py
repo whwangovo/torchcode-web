@@ -186,13 +186,17 @@ def get_notebook(task_id: str) -> dict:
     def _strip_imports(src: str) -> str:
         lines = [l for l in src.splitlines() if not l.startswith("import ") and not l.startswith("from ")]
         return "\n".join(lines).strip()
+
+    def _strip_comment_lines(src: str) -> str:
+        lines = [l for l in src.splitlines() if not l.strip().startswith("#")]
+        return "\n".join(lines).strip()
     cells = []
     for c in nb.get("cells", []):
         src = "".join(c["source"])
         if not src.strip() or any(s in src for s in _skip):
             continue
         if c["cell_type"] == "code":
-            src = _strip_imports(src)
+            src = _strip_imports(_strip_comment_lines(src))
             if not src.strip():
                 continue
             role = "solution" if (fn_name and f"def {fn_name}" in src) else "demo"
