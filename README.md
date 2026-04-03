@@ -45,7 +45,7 @@ cd torchcode-web
 
 # 2. Install dependencies
 pip install -e .
-npm install && cd web && npm install && cd ..
+npm install
 
 # 3. Run
 npm run dev

@@ -52,7 +52,7 @@ cd torchcode-web
 
 # 2. 安装依赖
 pip install -e .
-npm install && cd web && npm install && cd ..
+npm install
 
 # 3. 启动
 npm run dev
