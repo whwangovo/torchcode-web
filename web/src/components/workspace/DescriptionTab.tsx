@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Lightbulb, ChevronDown, ChevronRight } from 'lucide-react';
 import { DifficultyBadge } from '@/components/problem/DifficultyBadge';
+import { PythonCode } from '@/lib/pythonHighlight';
 import { useLocale } from '@/context/LocaleContext';
 import type { Problem } from '@/lib/types';
 
@@ -32,8 +33,11 @@ export function DescriptionTab({ problem, hasAttempted }: DescriptionTabProps) {
       <div className="space-y-3">
         <h3 className="text-sm font-medium text-text-primary">{t('testCases')}</h3>
         {problem.tests.slice(0, 2).map((test, i) => (
-          <div key={i} className="p-3 rounded-lg bg-surface-secondary border border-border/50">
-            <p className="text-xs font-medium text-text-secondary mb-1">{test.name}</p>
+          <div key={i} className="rounded-lg bg-surface-secondary border border-border/50 overflow-hidden">
+            <p className="text-xs font-medium text-text-secondary px-3 pt-2 pb-1">{test.name}</p>
+            <pre className="text-xs font-mono px-3 pb-3 overflow-x-auto leading-relaxed">
+              <PythonCode code={test.code.replace(/\{fn\}/g, problem.functionName).trim()} />
+            </pre>
           </div>
         ))}
         {problem.tests.length > 2 && (
