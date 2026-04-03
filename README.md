@@ -42,7 +42,6 @@ A self-hosted coding practice platform for PyTorch. Write implementations in a b
 
 - Python 3.11+
 - Node.js 18+
-- PyTorch installed (`pip install torch` or via [pytorch.org](https://pytorch.org/get-started/locally/))
 
 ### Installation
 
@@ -51,11 +50,15 @@ A self-hosted coding practice platform for PyTorch. Write implementations in a b
 git clone https://github.com/whwangovo/torchcode-web.git
 cd torchcode-web
 
-# 2. Install dependencies
+# 2. Create and activate conda environment (recommended)
+conda create -n torchcode python=3.11 -y
+conda activate torchcode
+
+# 3. Install dependencies
 pip install -e .
 npm install
 
-# 3. Run
+# 4. Run
 npm run dev
 ```
 

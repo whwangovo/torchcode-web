@@ -26,6 +26,8 @@ classifiers = [
 dependencies = [
     "fastapi",
     "uvicorn",
+    "torch",
+    "numpy",
 ]
 
 [project.optional-dependencies]

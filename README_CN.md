@@ -41,7 +41,6 @@
 
 - Python 3.11+
 - Node.js 18+
-- 已安装 PyTorch（`pip install torch` 或参考 [pytorch.org](https://pytorch.org/get-started/locally/)）
 
 ### 安装
 
@@ -50,11 +49,15 @@
 git clone https://github.com/whwangovo/torchcode-web.git
 cd torchcode-web
 
-# 2. 安装依赖
+# 2. 创建并激活 conda 环境（推荐）
+conda create -n torchcode python=3.11 -y
+conda activate torchcode
+
+# 3. 安装依赖
 pip install -e .
 npm install
 
-# 3. 启动
+# 4. 启动
 npm run dev
 ```
 
