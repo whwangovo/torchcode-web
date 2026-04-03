@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Code, Flame } from 'lucide-react';
 import { GlassBar } from '@/components/ui/GlassBar';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/context/LocaleContext';
 
 interface TopNavProps {
   solvedCount?: number;
@@ -13,10 +14,11 @@ interface TopNavProps {
 
 export function TopNav({ solvedCount, totalCount }: TopNavProps) {
   const pathname = usePathname();
+  const { locale, setLocale, t } = useLocale();
 
   const links = [
-    { href: '/', label: 'Home' },
-    { href: '/problems', label: 'Problems' },
+    { href: '/', label: t('home') },
+    { href: '/problems', label: t('problems') },
   ];
 
   return (
@@ -43,12 +45,20 @@ export function TopNav({ solvedCount, totalCount }: TopNavProps) {
           ))}
         </div>
       </div>
-      {solvedCount !== undefined && totalCount !== undefined && (
-        <div className="flex items-center gap-2 text-sm text-text-secondary">
-          <Flame className="w-4 h-4 text-medium" />
-          <span>{solvedCount}/{totalCount} solved</span>
-        </div>
-      )}
+      <div className="flex items-center gap-3">
+        {solvedCount !== undefined && totalCount !== undefined && (
+          <div className="flex items-center gap-2 text-sm text-text-secondary">
+            <Flame className="w-4 h-4 text-medium" />
+            <span>{t('solvedCount', { solved: solvedCount, total: totalCount })}</span>
+          </div>
+        )}
+        <button
+          onClick={() => setLocale(locale === 'en' ? 'zh' : 'en')}
+          className="px-2.5 py-1 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-gray-100 transition-colors"
+        >
+          {locale === 'en' ? '中文' : 'EN'}
+        </button>
+      </div>
     </GlassBar>
   );
 }
