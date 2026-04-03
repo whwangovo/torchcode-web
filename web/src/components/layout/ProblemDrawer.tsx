@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
+import { useLocale } from '@/context/LocaleContext';
 import type { Problem, ProgressMap } from '@/lib/types';
 
 interface ProblemDrawerProps {
@@ -15,9 +16,9 @@ interface ProblemDrawerProps {
 }
 
 export function ProblemDrawer({ open, onClose, problems, progress, currentId }: ProblemDrawerProps) {
+  const { t, tProblem } = useLocale();
   return (
     <>
-      {/* Backdrop */}
       <div
         className={cn(
           'fixed inset-0 bg-black/20 z-40 transition-opacity duration-250',
@@ -25,7 +26,6 @@ export function ProblemDrawer({ open, onClose, problems, progress, currentId }: 
         )}
         onClick={onClose}
       />
-      {/* Drawer */}
       <div
         className={cn(
           'fixed left-0 top-0 bottom-0 w-80 bg-surface z-50 shadow-soft-lg',
@@ -34,7 +34,7 @@ export function ProblemDrawer({ open, onClose, problems, progress, currentId }: 
         )}
       >
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <span className="font-semibold text-sm tracking-tight">Problems</span>
+          <span className="font-semibold text-sm tracking-tight">{t('problems')}</span>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
             <X className="w-4 h-4 text-text-secondary" />
           </button>
@@ -60,9 +60,9 @@ export function ProblemDrawer({ open, onClose, problems, progress, currentId }: 
                   status === 'attempted' && 'bg-medium',
                   status === 'todo' && 'bg-gray-300',
                 )} />
-                <span className="truncate flex-1">{p.title}</span>
+                <span className="truncate flex-1">{tProblem(p.id)}</span>
                 <Badge variant={p.difficulty.toLowerCase() as 'easy' | 'medium' | 'hard'}>
-                  {p.difficulty}
+                  {t(p.difficulty as 'Easy' | 'Medium' | 'Hard')}
                 </Badge>
               </Link>
             );

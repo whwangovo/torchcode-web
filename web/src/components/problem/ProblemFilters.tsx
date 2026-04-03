@@ -2,6 +2,7 @@
 
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/context/LocaleContext';
 
 interface ProblemFiltersProps {
   search: string;
@@ -12,21 +13,22 @@ interface ProblemFiltersProps {
   onStatusChange: (v: string) => void;
 }
 
-const difficulties = ['All', 'Easy', 'Medium', 'Hard'];
-const statuses = ['All', 'Todo', 'Attempted', 'Solved'];
+const difficulties = ['All', 'Easy', 'Medium', 'Hard'] as const;
+const statuses = ['All', 'Todo', 'Attempted', 'Solved'] as const;
 
 export function ProblemFilters({
   search, onSearchChange,
   difficulty, onDifficultyChange,
   status, onStatusChange,
 }: ProblemFiltersProps) {
+  const { t } = useLocale();
   return (
     <div className="flex items-center gap-4 mb-6">
       <div className="relative flex-1 max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
         <input
           type="text"
-          placeholder="Search problems..."
+          placeholder={t('searchPlaceholder')}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full h-9 pl-9 pr-3 rounded-lg bg-surface-secondary border border-border text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-colors"
@@ -44,7 +46,7 @@ export function ProblemFilters({
                 : 'text-text-secondary hover:bg-gray-100'
             )}
           >
-            {d}
+            {t(d)}
           </button>
         ))}
       </div>
@@ -60,7 +62,7 @@ export function ProblemFilters({
                 : 'text-text-secondary hover:bg-gray-100'
             )}
           >
-            {s}
+            {t(s)}
           </button>
         ))}
       </div>

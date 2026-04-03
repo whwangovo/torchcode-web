@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useLocale } from '@/context/LocaleContext';
 import type { SubmissionResult } from '@/lib/types';
 
 interface TestResultsProps {
@@ -11,6 +11,7 @@ interface TestResultsProps {
 
 export function TestResults({ result }: TestResultsProps) {
   const [expanded, setExpanded] = useState(true);
+  const { t } = useLocale();
 
   if (!result) return null;
 
@@ -22,7 +23,7 @@ export function TestResults({ result }: TestResultsProps) {
       >
         {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         <span className={result.allPassed ? 'text-easy' : 'text-hard'}>
-          {result.allPassed ? 'All Passed' : `${result.passed}/${result.total} Passed`}
+          {result.allPassed ? t('allPassed') : t('passedCount', { passed: result.passed, total: result.total })}
         </span>
         <span className="text-text-tertiary text-xs ml-auto">{result.totalTimeMs.toFixed(0)}ms</span>
       </button>

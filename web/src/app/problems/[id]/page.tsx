@@ -13,13 +13,13 @@ import { CodeEditor } from '@/components/workspace/CodeEditor';
 import { TestResults } from '@/components/workspace/TestResults';
 import { ActionBar } from '@/components/workspace/ActionBar';
 import { useProblemStore } from '@/store/problemStore';
+import { useLocale } from '@/context/LocaleContext';
 import { cn } from '@/lib/utils';
 import type { Problem, ProgressMap, SubmissionResult } from '@/lib/types';
 
 export default function WorkspacePage() {
   const { id } = useParams<{ id: string }>();
-  const {
-    currentCode, setCurrentCode,
+  const { t, tProblem } = useLocale();
     submissionResult, setSubmissionResult,
     isSubmitting, setIsSubmitting,
     drawerOpen, setDrawerOpen,
@@ -71,7 +71,7 @@ export default function WorkspacePage() {
   if (!problem) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
-        <p className="text-sm text-text-tertiary">Loading...</p>
+        <p className="text-sm text-text-tertiary">{t('loading')}</p>
       </div>
     );
   }
@@ -95,13 +95,13 @@ export default function WorkspacePage() {
             value="description"
             className="px-3 py-2 text-sm data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent data-[state=inactive]:text-text-secondary hover:text-text-primary transition-colors -mb-px"
           >
-            Description
+            {t('description')}
           </Tabs.Trigger>
           <Tabs.Trigger
             value="solution"
             className="px-3 py-2 text-sm data-[state=active]:text-accent data-[state=active]:border-b-2 data-[state=active]:border-accent data-[state=inactive]:text-text-secondary hover:text-text-primary transition-colors -mb-px"
           >
-            Solution
+            {t('solution')}
           </Tabs.Trigger>
         </Tabs.List>
         <Tabs.Content value="description" className="flex-1 overflow-auto">
