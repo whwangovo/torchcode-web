@@ -23,4 +23,11 @@ TASK = {
             "code": "\nimport torch\nemb = {fn}(10, 4)\nout = emb(torch.tensor([2, 5]))\nout.sum().backward()\nassert emb.weight.grad is not None, 'weight.grad is None'\nassert emb.weight.grad[2].abs().sum() > 0, 'Grad at used index should be non-zero'\nassert emb.weight.grad[0].abs().sum() == 0, 'Grad at unused index should be zero'\n"
         }
     ]
+    "solution": "class MyEmbedding(nn.Module):
+    def __init__(self, num_embeddings, embedding_dim):
+        super().__init__()
+        self.weight = nn.Parameter(torch.randn(num_embeddings, embedding_dim))
+
+    def forward(self, indices):
+        return self.weight[indices]",
 }

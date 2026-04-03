@@ -27,4 +27,11 @@ TASK = {
             "code": "\nimport math\nlr = {fn}(step=55, total_steps=100, warmup_steps=10, max_lr=0.001, min_lr=0.0)\nprogress = (55 - 10) / (100 - 10)\nexpected = 0.5 * 0.001 * (1 + math.cos(math.pi * progress))\nassert abs(lr - expected) < 1e-8, f'{lr} vs {expected}'\n"
         }
     ]
+    "solution": "def cosine_lr_schedule(step, total_steps, warmup_steps, max_lr, min_lr=0.0):
+    if step < warmup_steps:
+        return max_lr * step / warmup_steps
+    if step >= total_steps:
+        return min_lr
+    progress = (step - warmup_steps) / (total_steps - warmup_steps)
+    return min_lr + 0.5 * (max_lr - min_lr) * (1.0 + math.cos(math.pi * progress))",
 }

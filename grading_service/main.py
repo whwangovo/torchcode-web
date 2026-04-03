@@ -126,6 +126,14 @@ def grade(request: SubmitRequest) -> GradeResponse:
     )
 
 
+@app.get("/tasks/{task_id}/solution")
+def get_solution(task_id: str) -> dict[str, str]:
+    task = get_task(task_id)
+    if task is None or not task.get("solution"):
+        raise HTTPException(status_code=404, detail=f"Solution for '{task_id}' not found")
+    return {"solution": task["solution"]}
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}

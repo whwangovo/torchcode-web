@@ -74,5 +74,28 @@ TASK = {
             "assert torch.allclose(logps.grad[:2], logps.grad[2:]), 'Groups should be treated independently but symmetrically'\n"
         },
     ],
-}
+    "solution": "def grpo_loss(logps: Tensor, rewards: Tensor, group_ids: Tensor,
+              eps: float = 1e-5) -> Tensor:
+    \"\"\"Group Relative Policy Optimization (GRPO) loss.
 
+    logps: (B,) policy log-probs for each sampled response
+    rewards: (B,) scalar rewards for each response
+    group_ids: (B,) integers, same id = same prompt/group
+    returns: scalar loss (Tensor)
+    \"\"\"
+    # Compute per-group normalized advantages A_i
+    unique_ids = group_ids.unique()
+    advantages = torch.empty_like(rewards)
+    for gid in unique_ids:
+        mask = group_ids == gid
+        r_g = rewards[mask]
+        mean_g = r_g.mean()
+        std_g = r_g.std(unbiased=False)
+        advantages[mask] = (r_g - mean_g) / (std_g + eps)
+
+    # Stop gradient through advantages
+    advantages_detached = advantages.detach()
+
+    # GRPO objective: -E[A_i * logpi_i]
+    return -(advantages_detached * logps).mean()",
+}

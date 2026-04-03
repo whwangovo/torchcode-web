@@ -19,4 +19,22 @@ TASK = {
             "code": "\nimport torch\nV = 8\nfor seed in range(20):\n    torch.manual_seed(seed)\n    target = torch.softmax(torch.randn(3, V), dim=-1)\n    draft = torch.softmax(torch.randn(3, V), dim=-1)\n    tokens = torch.randint(0, V, (3,))\n    for t in {fn}(target, draft, tokens):\n        assert 0 <= t < V, f'Token {t} out of range'\n"
         }
     ]
+    "solution": "def speculative_decode(target_probs, draft_probs, draft_tokens):
+    K = len(draft_tokens)
+    accepted = []
+    for i in range(K):
+        t = draft_tokens[i].item()
+        ratio = target_probs[i, t] / max(draft_probs[i, t].item(), 1e-10)
+        if torch.rand(1).item() < min(1.0, ratio.item()):
+            accepted.append(t)
+        else:
+            adjusted = torch.clamp(target_probs[i] - draft_probs[i], min=0)
+            s = adjusted.sum()
+            if s > 0:
+                adjusted = adjusted / s
+            else:
+                adjusted = torch.ones_like(adjusted) / adjusted.shape[0]
+            accepted.append(torch.multinomial(adjusted, 1).item())
+            return accepted
+    return accepted",
 }

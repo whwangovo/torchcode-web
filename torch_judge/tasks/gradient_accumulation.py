@@ -19,4 +19,14 @@ TASK = {
             "code": "\nimport torch, torch.nn as nn\nmodel = nn.Linear(4, 2)\nopt = torch.optim.SGD(model.parameters(), lr=0.1)\nw_before = model.weight.data.clone()\n{fn}(model, opt, nn.MSELoss(), [(torch.randn(2, 4), torch.randn(2, 2))])\nassert not torch.equal(model.weight.data, w_before), 'Should change'\n"
         }
     ]
+    "solution": "def accumulated_step(model, optimizer, loss_fn, micro_batches):
+    optimizer.zero_grad()
+    total_loss = 0.0
+    n = len(micro_batches)
+    for x, y in micro_batches:
+        loss = loss_fn(model(x), y) / n
+        loss.backward()
+        total_loss += loss.item()
+    optimizer.step()
+    return total_loss",
 }

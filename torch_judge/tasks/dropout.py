@@ -23,4 +23,14 @@ TASK = {
             "code": "\nimport torch\nd = {fn}(p=0.5)\nd.train()\nx = torch.randn(4, 8, requires_grad=True)\nd(x).sum().backward()\nassert x.grad is not None, 'x.grad is None'\n"
         }
     ]
+    "solution": "class MyDropout(nn.Module):
+    def __init__(self, p=0.5):
+        super().__init__()
+        self.p = p
+
+    def forward(self, x):
+        if not self.training or self.p == 0:
+            return x
+        mask = (torch.rand_like(x) > self.p).float()
+        return x * mask / (1 - self.p)",
 }

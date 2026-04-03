@@ -51,4 +51,12 @@ assert elapsed < 5.0, f'Too slow: {elapsed:.2f}s — should be O(S*D^2) not O(S^
 """,
         },
     ],
+    "solution": "def linear_attention(Q, K, V):
+    Q_prime = F.elu(Q) + 1
+    K_prime = F.elu(K) + 1
+    KV = torch.bmm(K_prime.transpose(1, 2), V)       # (B, D_k, D_v)
+    Z = K_prime.sum(dim=1, keepdim=True)              # (B, 1, D_k)
+    num = torch.bmm(Q_prime, KV)                      # (B, S, D_v)
+    den = torch.bmm(Q_prime, Z.transpose(1, 2))       # (B, S, 1)
+    return num / (den + 1e-6)",
 }

@@ -94,4 +94,51 @@ assert not w.requires_grad, 'Closed-form w should not require grad'
 """,
         },
     ],
+    "solution": "class LinearRegression:
+    def closed_form(self, X: torch.Tensor, y: torch.Tensor):
+        \"\"\"Normal equation via augmented matrix.\"\"\"
+        N, D = X.shape
+        # Augment X with ones column for bias
+        X_aug = torch.cat([X, torch.ones(N, 1)], dim=1)  # (N, D+1)
+        # Solve (X^T X) theta = X^T y
+        theta = torch.linalg.lstsq(X_aug, y).solution      # (D+1,)
+        w = theta[:D]
+        b = theta[D]
+        return w.detach(), b.detach()
+
+    def gradient_descent(self, X: torch.Tensor, y: torch.Tensor,
+                         lr: float = 0.01, steps: int = 1000):
+        \"\"\"Manual gradient computation — no autograd.\"\"\"
+        N, D = X.shape
+        w = torch.zeros(D)
+        b = torch.tensor(0.0)
+
+        for _ in range(steps):
+            pred = X @ w + b          # (N,)
+            error = pred - y           # (N,)
+            grad_w = (2.0 / N) * (X.T @ error)  # (D,)
+            grad_b = (2.0 / N) * error.sum()     # scalar
+            w = w - lr * grad_w
+            b = b - lr * grad_b
+
+        return w, b
+
+    def nn_linear(self, X: torch.Tensor, y: torch.Tensor,
+                  lr: float = 0.01, steps: int = 1000):
+        \"\"\"PyTorch nn.Linear with autograd training loop.\"\"\"
+        N, D = X.shape
+        layer = nn.Linear(D, 1)
+        optimizer = torch.optim.SGD(layer.parameters(), lr=lr)
+        loss_fn = nn.MSELoss()
+
+        for _ in range(steps):
+            optimizer.zero_grad()
+            pred = layer(X).squeeze(-1)  # (N,)
+            loss = loss_fn(pred, y)
+            loss.backward()
+            optimizer.step()
+
+        w = layer.weight.data.squeeze(0)  # (D,)
+        b = layer.bias.data.squeeze(0)    # scalar ()
+        return w, b",
 }

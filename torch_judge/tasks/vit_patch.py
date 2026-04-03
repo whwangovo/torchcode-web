@@ -23,4 +23,18 @@ TASK = {
             "code": "\nimport torch\npe = {fn}(img_size=32, patch_size=8, in_channels=3, embed_dim=64)\nx = torch.randn(1, 3, 32, 32, requires_grad=True)\npe(x).sum().backward()\nassert x.grad is not None, 'x.grad is None'\n"
         }
     ]
+    "solution": "class PatchEmbedding(nn.Module):
+    def __init__(self, img_size, patch_size, in_channels, embed_dim):
+        super().__init__()
+        self.patch_size = patch_size
+        self.num_patches = (img_size // patch_size) ** 2
+        self.proj = nn.Linear(in_channels * patch_size * patch_size, embed_dim)
+
+    def forward(self, x):
+        B, C, H, W = x.shape
+        p = self.patch_size
+        n_h, n_w = H // p, W // p
+        x = x.reshape(B, C, n_h, p, n_w, p)
+        x = x.permute(0, 2, 4, 1, 3, 5).reshape(B, n_h * n_w, C * p * p)
+        return self.proj(x)",
 }

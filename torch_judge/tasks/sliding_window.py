@@ -70,4 +70,13 @@ assert Q.grad is not None, 'Q.grad is None'
 """,
         },
     ],
+    "solution": "def sliding_window_attention(Q, K, V, window_size):
+    d_k = K.size(-1)
+    scores = torch.bmm(Q, K.transpose(1, 2)) / math.sqrt(d_k)
+    S = Q.size(1)
+    idx = torch.arange(S, device=Q.device)
+    mask = (idx.unsqueeze(0) - idx.unsqueeze(1)).abs() > window_size
+    scores = scores.masked_fill(mask.unsqueeze(0), float('-inf'))
+    weights = torch.softmax(scores, dim=-1)
+    return torch.bmm(weights, V)",
 }

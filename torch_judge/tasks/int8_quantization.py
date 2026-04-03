@@ -27,4 +27,19 @@ TASK = {
             "code": "\nimport torch\nq = {fn}(torch.randn(4, 4))\nparam_names = [n for n, _ in q.named_parameters()]\nassert 'weight_int8' not in param_names, 'weight_int8 should be a buffer'\nassert 'scale' not in param_names, 'scale should be a buffer'\n"
         }
     ]
+    "solution": "class Int8Linear(nn.Module):
+    def __init__(self, weight, bias=None):
+        super().__init__()
+        scale = weight.abs().amax(dim=1, keepdim=True) / 127.0
+        self.register_buffer('weight_int8',
+            torch.round(weight / (scale + 1e-10)).clamp(-128, 127).to(torch.int8))
+        self.register_buffer('scale', scale)
+        self.bias = nn.Parameter(bias.clone()) if bias is not None else None
+
+    def forward(self, x):
+        w = self.weight_int8.float() * self.scale
+        out = x @ w.T
+        if self.bias is not None:
+            out = out + self.bias
+        return out",
 }
