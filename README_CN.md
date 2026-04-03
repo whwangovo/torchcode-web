@@ -45,23 +45,15 @@
 ### 安装
 
 ```bash
-# 1. 克隆仓库
 git clone https://github.com/whwangovo/torchcode-web.git
 cd torchcode-web
-
-# 2. 创建并激活 conda 环境（推荐）
-conda create -n torchcode python=3.11 -y
-conda activate torchcode
-
-# 3. 安装依赖
-pip install -e .
-npm install
-
-# 4. 启动
+conda create -n torchcode python=3.11 -y && conda activate torchcode
+pip install -e . && npm install
 npm run dev
 ```
 
-启动后：
+`npm install` 会自动安装 web 依赖（`postinstall`），`npm run dev` 同时启动前后端。
+
 - **评测服务** → `http://localhost:8000`
 - **Web 界面** → `http://localhost:3000`
 
