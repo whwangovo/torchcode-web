@@ -4,12 +4,18 @@ import { useEffect, useState } from 'react';
 import { CodeEditor } from './CodeEditor';
 import { useLocale } from '@/context/LocaleContext';
 
+interface Cell {
+  type: string;
+  source: string;
+  role: string;
+}
+
 interface SolutionTabProps {
   problemId: string;
 }
 
 export function SolutionTab({ problemId }: SolutionTabProps) {
-  const [cells, setCells] = useState<{ type: string; source: string }[]>([]);
+  const [cells, setCells] = useState<Cell[]>([]);
   const [loading, setLoading] = useState(true);
   const { t } = useLocale();
 
@@ -29,14 +35,39 @@ export function SolutionTab({ problemId }: SolutionTabProps) {
     return <div className="p-6 text-sm text-text-tertiary">{t('noSolution')}</div>;
   }
 
-  const code = cells
-    .filter((c) => c.type === 'code')
+  const solutionCode = cells
+    .filter((c) => c.role === 'solution')
     .map((c) => c.source)
     .join('\n\n');
 
+  const demoCode = cells
+    .filter((c) => c.role === 'demo')
+    .map((c) => c.source)
+    .join('\n\n');
+
+  const explanations = cells.filter((c) => c.role === 'explanation');
+
   return (
-    <div className="h-full">
-      <CodeEditor value={code} onChange={() => {}} readOnly />
+    <div className="h-full overflow-y-auto p-4 space-y-4">
+      {solutionCode && (
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-medium text-text-secondary px-1">Solution</p>
+          <div className="rounded-lg overflow-hidden border border-border/50" style={{ minHeight: 120 }}>
+            <CodeEditor value={solutionCode} onChange={() => {}} readOnly />
+          </div>
+        </div>
+      )}
+      {explanations.map((c, i) => (
+        <p key={i} className="text-sm text-text-secondary px-1 whitespace-pre-wrap">{c.source}</p>
+      ))}
+      {demoCode && (
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-medium text-text-secondary px-1">Demo</p>
+          <div className="rounded-lg overflow-hidden border border-border/50">
+            <CodeEditor value={demoCode} onChange={() => {}} readOnly />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

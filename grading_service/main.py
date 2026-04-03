@@ -81,8 +81,25 @@ class GradeResponse(BaseModel):
     error: str | None = None
 
 
+def _validate_code(code: str) -> str | None:
+    """Return an error message if code contains disallowed top-level statements."""
+    import ast
+    allowed = (ast.FunctionDef, ast.AsyncFunctionDef, ast.Import, ast.ImportFrom)
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        return f"Syntax error: {e}"
+    for node in tree.body:
+        if not isinstance(node, allowed):
+            return f"Only function definitions are allowed at the top level (found: {type(node).__name__})"
+    return None
+
+
 def _execute_tests(code: str, task: dict, test_indices: list[int] | None = None) -> GradeResponse:
     import torch, math
+    err = _validate_code(code)
+    if err:
+        return GradeResponse(passed=0, total=0, allPassed=False, results=[], totalTimeMs=0.0, error=err)
     user_ns: dict[str, Any] = {
         "torch": torch,
         "Tensor": torch.Tensor,
@@ -158,6 +175,8 @@ def run(request: RunRequest) -> GradeResponse:
 @app.get("/tasks/{task_id}/notebook")
 def get_notebook(task_id: str) -> dict:
     import json as _json
+    task = get_task(task_id)
+    fn_name = task.get("function_name") if task else None
     solutions_dir = Path(__file__).parent.parent / "solutions"
     matches = list(solutions_dir.glob(f"*_{task_id}_solution.ipynb"))
     if not matches:
@@ -174,8 +193,12 @@ def get_notebook(task_id: str) -> dict:
             continue
         if c["cell_type"] == "code":
             src = _strip_imports(src)
-        if src.strip():
-            cells.append({"type": c["cell_type"], "source": src})
+            if not src.strip():
+                continue
+            role = "solution" if (fn_name and f"def {fn_name}" in src) else "demo"
+        else:
+            role = "explanation"
+        cells.append({"type": c["cell_type"], "source": src, "role": role})
     return {"cells": cells}
 
 
