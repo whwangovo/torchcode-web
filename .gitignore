@@ -32,3 +32,4 @@ web/node_modules/
 web/.next/
 web/next-env.d.ts
 *.tsbuildinfo
+data/
