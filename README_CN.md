@@ -47,15 +47,16 @@
 ```bash
 git clone https://github.com/whwangovo/torchcode-web.git
 cd torchcode-web
-conda create -n torchcode python=3.11 -y && conda activate torchcode
-pip install -e . && npm install
+./setup.sh
 npm run dev
 ```
 
-`npm install` 会自动安装 web 依赖（`postinstall`），`npm run dev` 同时启动前后端。
+`setup.sh` 安装 Python 依赖（优先使用 `uv`，否则回退到 `pip`）和 Node 依赖。`npm run dev` 同时启动前后端。
 
 - **评测服务** → `http://localhost:8000`
 - **Web 界面** → `http://localhost:3000`
+
+> **注意：** 运行 `setup.sh` 前请先激活 Python 环境。推荐使用 [uv](https://github.com/astral-sh/uv) 加速安装。
 
 ---
 
