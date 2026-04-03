@@ -4,16 +4,8 @@
     从零实现 PyTorch 算子和模型架构——顶级 ML 团队面试中考察的核心技能。
     <br />
     <br />
-    <a href="README.md">English</a> · <a href="https://github.com/whwangovo/torchcode-web/issues">报告 Bug</a> · <a href="https://github.com/whwangovo/torchcode-web/issues">功能建议</a>
+    <a href="README.md">English</a>
   </p>
-</p>
-
-<p align="center">
-  <a href="https://pytorch.org"><img src="https://img.shields.io/badge/PyTorch-ee4c2c?style=flat-square&logo=pytorch&logoColor=white" /></a>
-  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" /></a>
-  <a href="https://fastapi.tiangolo.com"><img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" /></a>
-  <img src="https://img.shields.io/badge/题目数量-40-orange?style=flat-square" />
 </p>
 
 ---
@@ -22,7 +14,15 @@
 
 一个自托管的 PyTorch 编程练习平台。在浏览器内置的 Monaco 编辑器中编写实现，提交后由本地评测服务执行测试用例，并可与参考答案对比。
 
-40 道精选题目，3 个难度等级——从 ReLU 到 Flash Attention。
+40 道精选题目，3 个难度等级——从 ReLU 到 Flash Attention。无需 GPU。
+
+### 特性
+
+- **浏览器编辑器** — Monaco 编辑器，Python 语法高亮，无需配置 IDE
+- **即时反馈** — 提交代码后秒级返回测试结果
+- **参考答案** — 与标准实现对比你的方案
+- **进度追踪** — 跨会话保存进度，随时继续
+- **完全本地** — 所有代码在本机执行，不上传任何数据
 
 ### 技术栈
 
@@ -66,26 +66,26 @@ npm run dev
 
 ## 题目列表
 
-<details>
-<summary><b>简单（9 题）</b></summary>
+40 道题目，按类别分组：
 
-ReLU · Softmax · Dropout · Embedding · GELU · 交叉熵 · 梯度裁剪 · 梯度累积 · Kaiming 初始化
+| 类别 | 题目 |
+|---|---|
+| **基础** | ReLU、Softmax、GELU、Dropout、Embedding、交叉熵、Linear、Kaiming 初始化、线性回归 |
+| **归一化** | LayerNorm、BatchNorm、RMSNorm |
+| **注意力** | 缩放点积注意力、多头注意力、因果注意力、交叉注意力、GQA、滑动窗口、线性注意力、Flash Attention |
+| **架构** | MLP、GPT-2 Block、KV Cache、RoPE、Conv2D、LoRA、ViT Patch、MoE |
+| **训练与优化** | Adam、余弦学习率、梯度裁剪、梯度累积 |
+| **推理** | Top-k 采样、束搜索、推测解码、BPE 分词 |
+| **进阶** | INT8 量化、DPO Loss、GRPO Loss、PPO Loss |
 
-</details>
+### 建议学习计划
 
-<details>
-<summary><b>中等（15 题）</b></summary>
-
-Linear · LayerNorm · BatchNorm · RMSNorm · MLP · Attention · Conv2D · Adam · LoRA · ViT Patch · 束搜索 · Top-k 采样 · 余弦学习率 · 线性回归
-
-</details>
-
-<details>
-<summary><b>困难（16 题）</b></summary>
-
-多头注意力 · Flash Attention · GQA · KV Cache · RoPE · 因果注意力 · GPT-2 Block · MoE · BPE · 推测解码 · DPO Loss · GRPO Loss · PPO Loss · INT8 量化
-
-</details>
+| 周次 | 重点 | 预计时间 |
+|---|---|---|
+| 第 1 周 | 基础 + 归一化（12 题） | ~4 小时 |
+| 第 2 周 | 注意力机制（7 题） | ~4 小时 |
+| 第 3 周 | 架构 + 训练（12 题） | ~5 小时 |
+| 第 4 周 | 推理 + 进阶（9 题） | ~4 小时 |
 
 ---
 

@@ -15,7 +15,15 @@
 
 A self-hosted coding practice platform for PyTorch. Write implementations in a browser-based Monaco editor, run test cases against a local grading service, and compare your solution with the reference.
 
-40 curated problems across 3 difficulty levels — from ReLU to Flash Attention.
+40 curated problems across 3 difficulty levels — from ReLU to Flash Attention. No GPU required.
+
+### Features
+
+- **Browser-based editor** — Monaco editor with Python syntax highlighting, no IDE setup needed
+- **Instant feedback** — submit code and get test results in seconds
+- **Reference solutions** — compare your implementation against a working solution
+- **Progress tracking** — pick up where you left off across sessions
+- **Fully local** — all code execution happens on your machine, nothing sent to the cloud
 
 ### Tech Stack
 
@@ -60,26 +68,26 @@ This starts:
 
 ## Problem Set
 
-<details>
-<summary><b>Easy (9 problems)</b></summary>
+40 problems organized by category:
 
-ReLU · Softmax · Dropout · Embedding · GELU · Cross Entropy · Gradient Clipping · Gradient Accumulation · Kaiming Init
+| Category | Problems |
+|---|---|
+| **Fundamentals** | ReLU, Softmax, GELU, Dropout, Embedding, Cross Entropy, Linear, Kaiming Init, Linear Regression |
+| **Normalization** | LayerNorm, BatchNorm, RMSNorm |
+| **Attention** | Scaled Dot-Product Attention, Multi-Head Attention, Causal Attention, Cross Attention, GQA, Sliding Window, Linear Attention, Flash Attention |
+| **Architecture** | MLP, GPT-2 Block, KV Cache, RoPE, Conv2D, LoRA, ViT Patch, MoE |
+| **Training & Optimization** | Adam, Cosine LR, Gradient Clipping, Gradient Accumulation |
+| **Inference** | Top-k Sampling, Beam Search, Speculative Decoding, BPE Tokenization |
+| **Advanced** | INT8 Quantization, DPO Loss, GRPO Loss, PPO Loss |
 
-</details>
+### Suggested Study Plan
 
-<details>
-<summary><b>Medium (15 problems)</b></summary>
-
-Linear · LayerNorm · BatchNorm · RMSNorm · MLP · Attention · Conv2D · Adam · LoRA · ViT Patch · Beam Search · Top-k Sampling · Cosine LR · Linear Regression
-
-</details>
-
-<details>
-<summary><b>Hard (16 problems)</b></summary>
-
-Multi-Head Attention · Flash Attention · GQA · KV Cache · RoPE · Causal Attention · GPT-2 Block · MoE · BPE · Speculative Decoding · DPO Loss · GRPO Loss · PPO Loss · INT8 Quantization
-
-</details>
+| Week | Focus | Time |
+|---|---|---|
+| 1 | Fundamentals + Normalization (12 problems) | ~4 hrs |
+| 2 | Attention mechanisms (7 problems) | ~4 hrs |
+| 3 | Architecture + Training (12 problems) | ~5 hrs |
+| 4 | Inference + Advanced (9 problems) | ~4 hrs |
 
 ---
 
