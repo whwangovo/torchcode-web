@@ -1,11 +1,13 @@
 """FastAPI grading service for torch_judge tasks."""
 
+import sqlite3
 import sys
 from pathlib import Path
 
 # Add project root to sys.path for torch_judge imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import os
 import time
 from typing import Any
 
@@ -15,6 +17,41 @@ from pydantic import BaseModel
 from torch_judge.tasks import get_task
 
 app = FastAPI(title="Grading Service")
+
+# ---------------------------------------------------------------------------
+# SQLite DB (user sessions + progress)
+# ---------------------------------------------------------------------------
+
+_DB_PATH = os.environ.get("DB_PATH", str(Path(__file__).parent.parent / "data" / "torchcode.db"))
+
+
+def _get_db() -> sqlite3.Connection:
+    Path(_DB_PATH).parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(_DB_PATH)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA foreign_keys=ON")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_token TEXT UNIQUE NOT NULL,
+            created_at TEXT DEFAULT (datetime('now'))
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS progress (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            task_id TEXT NOT NULL,
+            status TEXT NOT NULL CHECK (status IN ('todo', 'attempted', 'solved')),
+            best_time_ms REAL,
+            attempts INTEGER DEFAULT 0,
+            solved_at TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            UNIQUE(user_id, task_id)
+        )
+    """)
+    conn.commit()
+    return conn
 
 
 class SubmitRequest(BaseModel):
@@ -148,6 +185,78 @@ def get_solution(task_id: str) -> dict[str, str]:
     if task is None or not task.get("solution"):
         raise HTTPException(status_code=404, detail=f"Solution for '{task_id}' not found")
     return {"solution": task["solution"]}
+
+
+class UserRequest(BaseModel):
+    sessionToken: str
+
+
+class ProgressEntry(BaseModel):
+    status: str
+    bestTimeMs: float | None = None
+    attempts: int
+    solvedAt: str | None = None
+
+
+class SaveProgressRequest(BaseModel):
+    sessionToken: str
+    taskId: str
+    status: str
+    execTimeMs: float | None = None
+
+
+@app.post("/users")
+def get_or_create_user(request: UserRequest) -> dict[str, int]:
+    with _get_db() as conn:
+        row = conn.execute("SELECT id FROM users WHERE session_token = ?", (request.sessionToken,)).fetchone()
+        if row:
+            return {"userId": row[0]}
+        cur = conn.execute("INSERT INTO users (session_token) VALUES (?)", (request.sessionToken,))
+        return {"userId": cur.lastrowid}
+
+
+@app.get("/progress/{user_id}")
+def get_progress(user_id: int) -> dict[str, ProgressEntry]:
+    with _get_db() as conn:
+        rows = conn.execute(
+            "SELECT task_id, status, best_time_ms, attempts, solved_at FROM progress WHERE user_id = ?",
+            (user_id,)
+        ).fetchall()
+    return {
+        row[0]: ProgressEntry(status=row[1], bestTimeMs=row[2], attempts=row[3], solvedAt=row[4])
+        for row in rows
+    }
+
+
+@app.post("/progress")
+def save_progress(request: SaveProgressRequest) -> dict[str, str]:
+    with _get_db() as conn:
+        row = conn.execute("SELECT id FROM users WHERE session_token = ?", (request.sessionToken,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_id = row[0]
+        existing = conn.execute(
+            "SELECT status, best_time_ms FROM progress WHERE user_id = ? AND task_id = ?",
+            (user_id, request.taskId)
+        ).fetchone()
+        if existing:
+            if request.status == "solved":
+                best = min(existing[1], request.execTimeMs) if existing[1] and request.execTimeMs else (existing[1] or request.execTimeMs)
+                conn.execute(
+                    "UPDATE progress SET status = ?, best_time_ms = ?, attempts = attempts + 1, solved_at = datetime('now') WHERE user_id = ? AND task_id = ?",
+                    (request.status, best, user_id, request.taskId)
+                )
+            else:
+                conn.execute(
+                    "UPDATE progress SET status = ?, attempts = attempts + 1 WHERE user_id = ? AND task_id = ?",
+                    (request.status, user_id, request.taskId)
+                )
+        else:
+            conn.execute(
+                "INSERT INTO progress (user_id, task_id, status, best_time_ms, attempts, solved_at) VALUES (?, ?, ?, ?, 1, datetime('now'))",
+                (user_id, request.taskId, request.status, request.execTimeMs)
+            )
+    return {"ok": "true"}
 
 
 @app.get("/health")
