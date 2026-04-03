@@ -119,18 +119,6 @@ torchcode-web/
 
 ---
 
-## 参与贡献
-
-欢迎贡献！可以提 Issue 或提交 Pull Request。
-
-1. Fork 本项目
-2. 创建功能分支（`git checkout -b feature/amazing-feature`）
-3. 提交更改（`git commit -m 'feat: add amazing feature'`）
-4. 推送到分支（`git push origin feature/amazing-feature`）
-5. 发起 Pull Request
-
----
-
 ## 致谢
 
 题库和评测引擎基于 [duoan](https://github.com/duoan) 的 [TorchCode](https://github.com/duoan/TorchCode)，遵循 MIT 协议。

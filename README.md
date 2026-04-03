@@ -4,18 +4,9 @@
     Practice implementing PyTorch operators and architectures from scratch.
     <br />
     The exact skills top ML teams test for.
-    <br />
-    <br />
-    <a href="README_CN.md">中文</a> · <a href="https://github.com/whwangovo/torchcode-web/issues">Report Bug</a> · <a href="https://github.com/whwangovo/torchcode-web/issues">Request Feature</a>
+	<br />
+    <a href="README_CN.md">中文</a>
   </p>
-</p>
-
-<p align="center">
-  <a href="https://pytorch.org"><img src="https://img.shields.io/badge/PyTorch-ee4c2c?style=flat-square&logo=pytorch&logoColor=white" /></a>
-  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" /></a>
-  <a href="https://fastapi.tiangolo.com"><img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" /></a>
-  <img src="https://img.shields.io/badge/problems-40-orange?style=flat-square" />
 </p>
 
 ---
@@ -28,12 +19,12 @@ A self-hosted coding practice platform for PyTorch. Write implementations in a b
 
 ### Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js + Monaco Editor + Tailwind CSS |
-| Backend | FastAPI grading service |
+| Layer        | Technology                                                                           |
+| ------------ | ------------------------------------------------------------------------------------ |
+| Frontend     | Next.js + Monaco Editor + Tailwind CSS                                               |
+| Backend      | FastAPI grading service                                                              |
 | Judge Engine | [torch_judge](https://github.com/duoan/TorchCode) — executes and validates submissions |
-| Storage | SQLite (progress tracking) |
+| Storage      | SQLite (progress tracking)                                                           |
 
 ---
 
@@ -65,6 +56,7 @@ npm run dev
 ```
 
 This starts:
+
 - **Grading service** → `http://localhost:8000`
 - **Web app** → `http://localhost:3000`
 
@@ -97,10 +89,10 @@ Multi-Head Attention · Flash Attention · GQA · KV Cache · RoPE · Causal Att
 
 ## Configuration
 
-| Variable | Default | Description |
-|---|---|---|
-| `GRADING_SERVICE_URL` | `http://localhost:8000` | Grading service URL |
-| `DB_PATH` | `./data/torchcode.db` | SQLite database for progress tracking |
+| Variable                | Default                   | Description                           |
+| ----------------------- | ------------------------- | ------------------------------------- |
+| `GRADING_SERVICE_URL` | `http://localhost:8000` | Grading service URL                   |
+| `DB_PATH`             | `./data/torchcode.db`   | SQLite database for progress tracking |
 
 Set in `web/.env.local` to override.
 
@@ -118,18 +110,6 @@ torchcode-web/
 ├── torch_judge/          # Judge engine (problem definitions + test runner)
 └── package.json          # Dev scripts (runs frontend + backend concurrently)
 ```
-
----
-
-## Contributing
-
-Contributions are welcome! Feel free to open an issue or submit a pull request.
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ---
 
