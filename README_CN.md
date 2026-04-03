@@ -1,7 +1,9 @@
 <p align="center">
   <h1 align="center">🔥 TorchCode Web</h1>
   <p align="center">
-    从零实现 PyTorch 算子和模型架构——顶级 ML 团队面试中考察的核心技能。
+    从零实现 PyTorch 算子和模型架构。
+    <br />
+    顶级 ML 团队面试中考察的核心技能。
     <br />
     <br />
     <a href="README.md">English</a>
