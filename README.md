@@ -45,6 +45,8 @@ A self-hosted coding practice platform for PyTorch. Write implementations in a b
 
 ### Installation
 
+**Option A — one-liner (recommended)**
+
 ```bash
 git clone https://github.com/whwangovo/torchcode-web.git
 cd torchcode-web
@@ -52,12 +54,27 @@ cd torchcode-web
 npm run dev
 ```
 
-`setup.sh` installs Python dependencies (using `uv` if available, otherwise `pip`) and Node dependencies. `npm run dev` starts both services concurrently.
+`setup.sh` automatically creates and activates a Python environment (prefers `uv` → `conda` → `venv`), installs all dependencies, then prints the start command.
+
+**Option B — manual**
+
+```bash
+git clone https://github.com/whwangovo/torchcode-web.git
+cd torchcode-web
+
+# create & activate your preferred Python env, e.g.:
+conda create -n torchcode python=3.11 -y && conda activate torchcode
+# or: python3 -m venv .venv && source .venv/bin/activate
+
+pip install -e .   # or: uv pip install -e .
+npm install
+npm run dev
+```
+
+Either way, once running:
 
 - **Grading service** → `http://localhost:8000`
 - **Web app** → `http://localhost:3000`
-
-> **Note:** Make sure your Python environment is activated before running `setup.sh`. We recommend [uv](https://github.com/astral-sh/uv) for faster installs.
 
 ---
 

@@ -44,6 +44,8 @@
 
 ### 安装
 
+**方式 A — 一键安装（推荐）**
+
 ```bash
 git clone https://github.com/whwangovo/torchcode-web.git
 cd torchcode-web
@@ -51,12 +53,27 @@ cd torchcode-web
 npm run dev
 ```
 
-`setup.sh` 安装 Python 依赖（优先使用 `uv`，否则回退到 `pip`）和 Node 依赖。`npm run dev` 同时启动前后端。
+`setup.sh` 自动创建并激活 Python 环境（优先级：`uv` → `conda` → `venv`），安装所有依赖，完成后打印启动命令。
+
+**方式 B — 手动安装**
+
+```bash
+git clone https://github.com/whwangovo/torchcode-web.git
+cd torchcode-web
+
+# 创建并激活 Python 环境，例如：
+conda create -n torchcode python=3.11 -y && conda activate torchcode
+# 或：python3 -m venv .venv && source .venv/bin/activate
+
+pip install -e .   # 或：uv pip install -e .
+npm install
+npm run dev
+```
+
+启动后：
 
 - **评测服务** → `http://localhost:8000`
 - **Web 界面** → `http://localhost:3000`
-
-> **注意：** 运行 `setup.sh` 前请先激活 Python 环境。推荐使用 [uv](https://github.com/astral-sh/uv) 加速安装。
 
 ---
 
