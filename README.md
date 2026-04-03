@@ -34,7 +34,7 @@ A self-hosted coding practice platform for PyTorch. Write implementations in a b
 
 - Python 3.11+
 - Node.js 18+
-- PyTorch installed in a conda/venv environment
+- PyTorch installed (`pip install torch` or via [pytorch.org](https://pytorch.org/get-started/locally/))
 
 ### Installation
 
@@ -43,15 +43,11 @@ A self-hosted coding practice platform for PyTorch. Write implementations in a b
 git clone https://github.com/whwangovo/torchcode-web.git
 cd torchcode-web
 
-# 2. Install Python dependencies
-pip install fastapi uvicorn torch pydantic
+# 2. Install dependencies
 pip install -e .
+npm install && cd web && npm install && cd ..
 
-# 3. Install Node dependencies
-npm install
-cd web && npm install && cd ..
-
-# 4. Run
+# 3. Run
 npm run dev
 ```
 

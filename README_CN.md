@@ -41,7 +41,7 @@
 
 - Python 3.11+
 - Node.js 18+
-- 已安装 PyTorch 的 conda/venv 环境
+- 已安装 PyTorch（`pip install torch` 或参考 [pytorch.org](https://pytorch.org/get-started/locally/)）
 
 ### 安装
 
@@ -50,15 +50,11 @@
 git clone https://github.com/whwangovo/torchcode-web.git
 cd torchcode-web
 
-# 2. 安装 Python 依赖
-pip install fastapi uvicorn torch pydantic
+# 2. 安装依赖
 pip install -e .
+npm install && cd web && npm install && cd ..
 
-# 3. 安装 Node 依赖
-npm install
-cd web && npm install && cd ..
-
-# 4. 启动
+# 3. 启动
 npm run dev
 ```
 
