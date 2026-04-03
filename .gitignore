@@ -19,3 +19,12 @@ labextension/torchcode_labext/labextension/
 labextension/tsconfig.tsbuildinfo
 labextension/yarn.lock
 .worktrees/
+
+# Node
+node_modules/
+web/node_modules/
+
+# Next.js build output
+web/.next/
+web/next-env.d.ts
+*.tsbuildinfo
