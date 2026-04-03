@@ -1,9 +1,9 @@
 {
-  "name": "torchcode",
+  "name": "torchcode-web",
   "version": "1.0.0",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "make run",
+    "dev:backend": "uvicorn grading_service.main:app --reload --port 8000",
     "dev:frontend": "cd web && npm run dev"
   },
   "devDependencies": {
