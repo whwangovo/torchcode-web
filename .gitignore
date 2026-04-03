@@ -20,8 +20,11 @@ labextension/tsconfig.tsbuildinfo
 labextension/yarn.lock
 .worktrees/
 
-# Node
-node_modules/
+# Runtime data
+web/data/
+
+# Docs
+docs/
 web/node_modules/
 
 # Next.js build output
