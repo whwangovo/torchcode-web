@@ -52,8 +52,13 @@ export function SolutionTab({ problemId }: SolutionTabProps) {
       {solutionCode && (
         <div className="flex flex-col gap-1">
           <p className="text-xs font-medium text-text-secondary px-1">Solution</p>
-          <div className="rounded-lg overflow-hidden border border-border/50" style={{ minHeight: 120 }}>
-            <CodeEditor value={solutionCode} onChange={() => {}} readOnly />
+          <div className="rounded-lg overflow-hidden border border-border/50">
+            <CodeEditor
+              value={solutionCode}
+              onChange={() => {}}
+              readOnly
+              height={`${Math.max(120, solutionCode.split('\n').length * 22 + 32)}px`}
+            />
           </div>
         </div>
       )}
@@ -64,7 +69,12 @@ export function SolutionTab({ problemId }: SolutionTabProps) {
         <div className="flex flex-col gap-1">
           <p className="text-xs font-medium text-text-secondary px-1">Demo</p>
           <div className="rounded-lg overflow-hidden border border-border/50">
-            <CodeEditor value={demoCode} onChange={() => {}} readOnly />
+            <CodeEditor
+              value={demoCode}
+              onChange={() => {}}
+              readOnly
+              height={`${Math.max(80, demoCode.split('\n').length * 22 + 32)}px`}
+            />
           </div>
         </div>
       )}
